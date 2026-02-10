@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../src/chat/*"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "../src/chat/messages.ts", "../src/chat/sessionStore.ts"]
+}

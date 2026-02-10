@@ -1,0 +1,129 @@
+{
+  "name": "conduit",
+  "displayName": "Conduit",
+  "description": "A business context tool that bridges the gap between LLM coding tools and business communication tools",
+  "version": "0.3.0",
+  "publisher": "your-publisher-id",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Chat",
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "businessContext.query",
+        "title": "Conduit: Query with Context"
+      },
+      {
+        "command": "businessContext.search",
+        "title": "Conduit: Search Messages"
+      },
+      {
+        "command": "businessContext.configure",
+        "title": "Conduit: Configure"
+      },
+      {
+        "command": "conduit.openChat",
+        "title": "Conduit: Open Chat",
+        "icon": "media/conduit-icon.svg"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "conduit.openChat",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Conduit",
+      "properties": {
+        "businessContext.contextProvider": {
+          "type": "string",
+          "default": "slack",
+          "enum": [
+            "slack",
+            "mock"
+          ],
+          "enumDescriptions": [
+            "Slack (via User OAuth Token)",
+            "Mock (built-in test data)"
+          ],
+          "description": "Which communication platform to pull business context from.",
+          "order": 1
+        },
+        "businessContext.codingAgent": {
+          "type": "string",
+          "default": "claude-code",
+          "enum": [
+            "claude-code",
+            "claude-sdk",
+            "mock"
+          ],
+          "enumDescriptions": [
+            "Claude Code CLI (one-shot pipeline)",
+            "Claude Code SDK (agentic, multi-turn with MCP tools)",
+            "Mock Agent (echoes prompt, no file changes)"
+          ],
+          "description": "Which AI coding tool to use for implementation.",
+          "order": 2
+        },
+        "businessContext.slack.userToken": {
+          "type": "string",
+          "default": "",
+          "description": "Slack User OAuth Token (xoxp-...). Required when using Slack as context provider.",
+          "order": 10
+        },
+        "businessContext.claude.yoloMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "DANGEROUS: Let the coding agent auto-execute ALL tool calls without approval, including file writes, deletions, and shell commands that can harm your system. By enabling this, you accept full responsibility for any ensuing destruction.",
+          "order": 20
+        },
+        "businessContext.maxSearchResults": {
+          "type": "number",
+          "default": 20,
+          "description": "Maximum number of messages to retrieve per search.",
+          "order": 30
+        },
+        "businessContext.maxThreadMessages": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of messages to retrieve per thread.",
+          "order": 31
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "postinstall": "cd webview-ui && npm install",
+    "build": "node esbuild.mjs",
+    "build:webview": "cd webview-ui && npm run build",
+    "watch": "node esbuild.mjs --watch",
+    "lint": "tslint -p .",
+    "test": "vitest run",
+    "test:webview": "cd webview-ui && npm test",
+    "test:all": "vitest run && cd webview-ui && npm test",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.74.0",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.93.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.34",
+    "@slack/web-api": "^7.0.0",
+    "zod": "^4.3.6"
+  }
+}
