@@ -160,11 +160,13 @@ export class MockProvider implements BusinessContextProvider {
     const inMatch = query.match(/in:(\S+)/);
 
     let results = FAKE_MESSAGES.filter((msg) => {
-      if (fromMatch && !msg.author.includes(fromMatch[1])) return false;
-      if (inMatch && !msg.channel.includes(inMatch[1])) return false;
+      if (fromMatch && !msg.author.toLowerCase().includes(fromMatch[1])) return false;
+      if (inMatch && !msg.channel.toLowerCase().includes(inMatch[1])) return false;
       if (keywords.length === 0) return true;
+      // Search both message text AND author name for keyword matches
       const text = msg.text.toLowerCase();
-      return keywords.some((kw) => text.includes(kw));
+      const author = msg.author.toLowerCase();
+      return keywords.some((kw) => text.includes(kw) || author.includes(kw));
     });
 
     return results.slice(0, max);
