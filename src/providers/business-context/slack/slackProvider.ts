@@ -206,7 +206,7 @@ export class SlackProvider implements BusinessContextProvider {
     const state = crypto.randomBytes(32).toString("hex");
     await context.globalState.update("slack-oauth-state", state);
 
-    const redirectUri = "vscode://jchai002.conduit/slack-callback";
+    const redirectUri = "vscode://jerrychaitea.conduit/slack-callback";
     const scopes = "search:read,channels:read,users:read,groups:read,im:read,mpim:read";
 
     const authUrl = `https://slack.com/oauth/v2/authorize?${new URLSearchParams({
@@ -232,7 +232,7 @@ export class SlackProvider implements BusinessContextProvider {
       throw new Error("Slack OAuth credentials not configured");
     }
 
-    const redirectUri = "vscode://jchai002.conduit/slack-callback";
+    const redirectUri = "vscode://jerrychaitea.conduit/slack-callback";
 
     // Exchange code for token
     const response = await fetch("https://slack.com/api/oauth.v2.access", {

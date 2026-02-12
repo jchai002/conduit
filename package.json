@@ -3,7 +3,7 @@
   "displayName": "Conduit",
   "description": "A business context tool that bridges the gap between LLM coding tools and business communication tools",
   "version": "0.3.0",
-  "publisher": "your-publisher-id",
+  "publisher": "jerrychaitea",
   "engines": {
     "vscode": "^1.93.0"
   },
