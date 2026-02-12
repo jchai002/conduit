@@ -19,7 +19,7 @@ export class SlackCache {
   private usersLoadedAt = 0;
   private channelsLoadedAt = 0;
 
-  constructor(private getClient: () => WebClient) {}
+  constructor(private getClient: () => Promise<WebClient>) {}
 
   async getUsers(): Promise<SlackUser[]> {
     if (Date.now() - this.usersLoadedAt < CACHE_TTL_MS && this.users.length > 0) {
@@ -92,7 +92,7 @@ export class SlackCache {
   }
 
   private async loadUsers(): Promise<void> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const result = await client.users.list({});
     this.users = (result.members ?? [])
       .filter((m: any) => !m.deleted && !m.is_bot && m.id !== "USLACKBOT")
@@ -105,7 +105,7 @@ export class SlackCache {
   }
 
   private async loadChannels(): Promise<void> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const result = await client.conversations.list({
       types: "public_channel,private_channel",
       exclude_archived: true,

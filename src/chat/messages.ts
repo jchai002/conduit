@@ -26,6 +26,10 @@ export type WebviewToExtensionMessage =
   // Setup detection — user clicked "Check Again" or "Open Terminal" on setup screen
   | { type: "check-setup" }
   | { type: "open-setup-terminal" }
+  // Provider connection — user clicked "Connect" or "Disconnect" for Slack
+  | { type: "check-slack-connection" }
+  | { type: "connect-slack" }
+  | { type: "disconnect-slack" }
   // Session management
   | { type: "load-session-list" }
   | { type: "open-session"; sessionId: string }
@@ -58,6 +62,8 @@ export type ExtensionToWebviewMessage =
   // Tells the webview whether the Claude CLI is installed and authenticated
   // so it can show the setup screen or transition to the normal chat experience.
   | { type: "setup-status"; cliInstalled: boolean; cliAuthenticated: boolean }
+  // Provider connection status — sent on webview-ready and when connection state changes
+  | { type: "slack-status"; connected: boolean; workspaceName?: string }
   // Session management
   | { type: "session-list"; sessions: SessionMeta[] }
   | { type: "session-opened"; meta: SessionMeta; messages: StoredMessage[] }

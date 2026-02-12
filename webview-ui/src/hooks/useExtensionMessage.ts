@@ -88,6 +88,14 @@ export function useExtensionMessage() {
           });
           break;
 
+        case "slack-status":
+          dispatch({
+            type: "ext/slack-status",
+            connected: msg.connected,
+            workspaceName: msg.workspaceName,
+          });
+          break;
+
         // Permission
         case "permission-request":
           dispatch({

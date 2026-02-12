@@ -73,6 +73,9 @@ export interface AppState {
    *  null = not yet checked (initial state), object = check completed.
    *  We use null to avoid flashing the setup screen before the check runs. */
   setupStatus: { cliInstalled: boolean; cliAuthenticated: boolean } | null;
+  /** Tracks Slack connection status.
+   *  null = not yet checked, object = check completed. */
+  slackStatus: { connected: boolean; workspaceName?: string } | null;
 }
 
 export const initialState: AppState = {
@@ -85,6 +88,7 @@ export const initialState: AppState = {
   messages: [],
   sessions: [],
   setupStatus: null,
+  slackStatus: null,
 };
 
 /**
@@ -112,6 +116,7 @@ export type Action =
   | { type: "ext/permission-request"; requestId: string; toolName: string; input: string; reason?: string }
   | { type: "ext/permission-mode"; mode: PermissionModeValue }
   | { type: "ext/setup-status"; cliInstalled: boolean; cliAuthenticated: boolean }
+  | { type: "ext/slack-status"; connected: boolean; workspaceName?: string }
   | { type: "ext/session-list"; sessions: SessionMeta[] }
   | { type: "ext/session-opened"; messages: Array<
       | { role: "user"; text: string }

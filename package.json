@@ -80,6 +80,18 @@
           "description": "Slack User OAuth Token (xoxp-...). Required when using Slack as context provider.",
           "order": 10
         },
+        "businessContext.slack.clientId": {
+          "type": "string",
+          "default": "",
+          "description": "Slack app client ID for OAuth (get from api.slack.com/apps).",
+          "order": 11
+        },
+        "businessContext.slack.clientSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Slack app client secret for OAuth (get from api.slack.com/apps).",
+          "order": 12
+        },
         "businessContext.claude.yoloMode": {
           "type": "boolean",
           "default": false,

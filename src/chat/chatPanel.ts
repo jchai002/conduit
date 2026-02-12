@@ -61,12 +61,12 @@ export class ChatPanel {
   private constructor(
     panel: vscode.WebviewPanel,
     private extensionUri: vscode.Uri,
+    private context: vscode.ExtensionContext,
     private registry: ProviderRegistry,
-    private getConfig: () => ChatPanelConfig,
-    workspaceState: vscode.Memento
+    private getConfig: () => ChatPanelConfig
   ) {
     this.panel = panel;
-    this.sessionStore = new SessionStore(workspaceState);
+    this.sessionStore = new SessionStore(context.workspaceState);
     this.panel.webview.html = this.getHtml();
 
     // Initialize permission mode from config (actual sync happens on "webview-ready")
@@ -105,7 +105,7 @@ export class ChatPanel {
     );
 
     panel.iconPath = vscode.Uri.joinPath(extensionUri, "media", "conduit-icon.svg");
-    ChatPanel.instance = new ChatPanel(panel, extensionUri, registry, getConfig, context.workspaceState);
+    ChatPanel.instance = new ChatPanel(panel, extensionUri, context, registry, getConfig);
   }
 
   private dispose() {
@@ -139,6 +139,7 @@ export class ChatPanel {
         // The webview uses setupStatus to decide whether to show the setup
         // screen or the normal chat experience.
         await this.checkSetupStatus();
+        await this.checkSlackConnection();
         this.restoreMostRecentSession();
         break;
       case "query":
@@ -172,6 +173,15 @@ export class ChatPanel {
         break;
       case "open-setup-terminal":
         this.openSetupTerminal();
+        break;
+      case "check-slack-connection":
+        await this.checkSlackConnection();
+        break;
+      case "connect-slack":
+        await this.connectSlack();
+        break;
+      case "disconnect-slack":
+        await this.disconnectSlack();
         break;
       case "load-session-list":
         this.post({ type: "session-list", sessions: this.sessionStore.getIndex() });
@@ -638,6 +648,53 @@ export class ChatPanel {
     const terminal = vscode.window.createTerminal({ name: "Claude Setup" });
     terminal.show();
     terminal.sendText("claude");
+  }
+
+  /** Checks Slack connection status and sends it to the webview. */
+  private async checkSlackConnection(): Promise<void> {
+    const slackProvider = this.registry.getBusinessContext("slack");
+    if (!slackProvider) {
+      this.post({ type: "slack-status", connected: false });
+      return;
+    }
+
+    // SlackProvider has getConnectionStatus method from OAuth implementation
+    const status = await (slackProvider as any).getConnectionStatus();
+    this.post({ type: "slack-status", ...status });
+  }
+
+  /** Static method to notify webview of Slack connection status change.
+   *  Called from extension.ts after OAuth callback completes. */
+  static checkSlackConnection(): void {
+    if (ChatPanel.instance) {
+      ChatPanel.instance.checkSlackConnection();
+    }
+  }
+
+  /** Initiates Slack OAuth flow by opening browser to authorization URL. */
+  private async connectSlack(): Promise<void> {
+    const slackProvider = this.registry.getBusinessContext("slack");
+    if (!slackProvider) {
+      vscode.window.showErrorMessage("Slack provider not available");
+      return;
+    }
+
+    try {
+      await (slackProvider as any).initiateOAuth(this.context);
+      // Status will be updated via URI handler callback
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`Failed to start Slack auth: ${err.message}`);
+    }
+  }
+
+  /** Disconnects Slack by clearing token and workspace name. */
+  private async disconnectSlack(): Promise<void> {
+    const slackProvider = this.registry.getBusinessContext("slack");
+    if (!slackProvider) return;
+
+    await (slackProvider as any).disconnect();
+    await this.checkSlackConnection(); // Send updated status to webview
+    vscode.window.showInformationMessage("Slack disconnected");
   }
 
   private getHtml(): string {

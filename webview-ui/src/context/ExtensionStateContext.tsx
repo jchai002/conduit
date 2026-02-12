@@ -177,6 +177,15 @@ export function appReducer(state: AppState, action: Action): AppState {
         },
       };
 
+    case "ext/slack-status":
+      return {
+        ...state,
+        slackStatus: {
+          connected: action.connected,
+          workspaceName: action.workspaceName,
+        },
+      };
+
     // ── Session messages ──
 
     case "ext/session-list":

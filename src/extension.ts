@@ -42,10 +42,22 @@ const registry = new ProviderRegistry();
 export function activate(context: vscode.ExtensionContext) {
   // Register all available providers and agents.
   // The user picks which ones to use via VS Code settings.
-  registry.registerBusinessContext(new SlackProvider());
+  registry.registerBusinessContext(new SlackProvider(context));
   registry.registerBusinessContext(new MockProvider());
   registry.registerCodingAgent(new ClaudeAgent());
   registry.registerCodingAgent(new MockAgent());
+
+  // Register URI handler for OAuth callbacks
+  context.subscriptions.push(
+    vscode.window.registerUriHandler({
+      handleUri(uri: vscode.Uri): void {
+        if (uri.path === "/slack-callback") {
+          handleSlackOAuthCallback(uri, context, registry);
+        }
+        // Future: /teams-callback, /jira-callback, etc.
+      },
+    })
+  );
 
   // Register command palette commands
   context.subscriptions.push(
@@ -73,6 +85,52 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
+
+// ─── OAuth Callback Handler ────────────────────────────────
+
+async function handleSlackOAuthCallback(
+  uri: vscode.Uri,
+  context: vscode.ExtensionContext,
+  registry: ProviderRegistry
+): Promise<void> {
+  const params = new URLSearchParams(uri.query);
+  const code = params.get("code");
+  const state = params.get("state");
+  const error = params.get("error");
+
+  if (error) {
+    vscode.window.showErrorMessage(`Slack auth failed: ${error}`);
+    return;
+  }
+
+  if (!code || !state) {
+    vscode.window.showErrorMessage("Invalid Slack OAuth callback");
+    return;
+  }
+
+  // Validate state nonce (stored in global state during initiation)
+  const expectedState = context.globalState.get<string>("slack-oauth-state");
+  if (state !== expectedState) {
+    vscode.window.showErrorMessage("Invalid OAuth state");
+    return;
+  }
+
+  // Exchange code for token via Slack provider
+  const slackProvider = registry.getBusinessContext("slack") as SlackProvider;
+  if (!slackProvider) {
+    vscode.window.showErrorMessage("Slack provider not found");
+    return;
+  }
+
+  try {
+    await slackProvider.handleOAuthCallback(code);
+    vscode.window.showInformationMessage("Slack connected successfully!");
+    // Notify webview of connection status change (if chat panel is open)
+    ChatPanel.checkSlackConnection();
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Failed to connect Slack: ${err.message}`);
+  }
+}
 
 // ─── Config ────────────────────────────────────────────────
 

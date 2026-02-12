@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as crypto from "crypto";
 import { WebClient } from "@slack/web-api";
 import { BusinessContextProvider } from "../../businessContextProvider";
 import { Message, Thread, SearchOptions } from "../../types";
@@ -15,7 +16,11 @@ export class SlackProvider implements BusinessContextProvider {
   readonly displayName = "Slack";
 
   private client: WebClient | null = null;
-  private cache: SlackCache = new SlackCache(() => this.getClient());
+  private cache: SlackCache;
+
+  constructor(private context: vscode.ExtensionContext) {
+    this.cache = new SlackCache(() => this.getClient());
+  }
 
   isConfigured(): boolean {
     return this.getToken() !== "";
@@ -44,7 +49,7 @@ export class SlackProvider implements BusinessContextProvider {
   }
 
   async searchMessages(options: SearchOptions): Promise<Message[]> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const maxResults = options.maxResults ?? this.getMaxSearchResults();
 
     const result = await client.search.messages({
@@ -61,7 +66,7 @@ export class SlackProvider implements BusinessContextProvider {
   }
 
   async getThread(channelId: string, threadId: string): Promise<Thread | null> {
-    const client = this.getClient();
+    const client = await this.getClient();
     const limit = this.getMaxThreadMessages();
 
     const result = await client.conversations.replies({
@@ -185,12 +190,119 @@ export class SlackProvider implements BusinessContextProvider {
     return this.cache.fuzzyMatchChannel(input);
   }
 
+  /**
+   * Initiates Slack OAuth flow by opening browser to authorization URL.
+   * Generates a random state nonce for CSRF protection.
+   */
+  async initiateOAuth(context: vscode.ExtensionContext): Promise<void> {
+    const config = vscode.workspace.getConfiguration("businessContext.slack");
+    const clientId = config.get<string>("clientId");
+
+    if (!clientId) {
+      throw new Error("Slack client ID not configured. Set businessContext.slack.clientId in settings.");
+    }
+
+    // Generate random state nonce for CSRF protection
+    const state = crypto.randomBytes(32).toString("hex");
+    await context.globalState.update("slack-oauth-state", state);
+
+    const redirectUri = "vscode://jchai002.conduit/slack-callback";
+    const scopes = "search:read,channels:read,users:read,groups:read,im:read,mpim:read";
+
+    const authUrl = `https://slack.com/oauth/v2/authorize?${new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: scopes,
+      state,
+    })}`;
+
+    vscode.env.openExternal(vscode.Uri.parse(authUrl));
+  }
+
+  /**
+   * Exchanges OAuth authorization code for bot token.
+   * Stores token in SecretStorage (encrypted) and clears the state nonce.
+   */
+  async handleOAuthCallback(code: string): Promise<void> {
+    const config = vscode.workspace.getConfiguration("businessContext.slack");
+    const clientId = config.get<string>("clientId");
+    const clientSecret = config.get<string>("clientSecret");
+
+    if (!clientId || !clientSecret) {
+      throw new Error("Slack OAuth credentials not configured");
+    }
+
+    const redirectUri = "vscode://jchai002.conduit/slack-callback";
+
+    // Exchange code for token
+    const response = await fetch("https://slack.com/api/oauth.v2.access", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        redirect_uri: redirectUri,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || "OAuth token exchange failed");
+    }
+
+    // Store bot token in SecretStorage (encrypted)
+    await this.context.secrets.store("slack-bot-token", data.access_token);
+
+    // Store workspace name for UI display
+    await this.context.globalState.update("slack-workspace-name", data.team?.name);
+
+    // Clear state nonce
+    await this.context.globalState.update("slack-oauth-state", undefined);
+
+    // Reset cached client so next search uses new token
+    this.client = null;
+  }
+
+  /**
+   * Checks if Slack is connected (bot token exists in SecretStorage).
+   */
+  async isConnected(): Promise<boolean> {
+    const token = await this.context.secrets.get("slack-bot-token");
+    return !!token;
+  }
+
+  /**
+   * Gets connection status including workspace name.
+   */
+  async getConnectionStatus(): Promise<{ connected: boolean; workspaceName?: string }> {
+    const connected = await this.isConnected();
+    if (!connected) return { connected: false };
+
+    const workspaceName = this.context.globalState.get<string>("slack-workspace-name");
+    return { connected: true, workspaceName };
+  }
+
+  /**
+   * Disconnects by clearing token and workspace name.
+   */
+  async disconnect(): Promise<void> {
+    await this.context.secrets.delete("slack-bot-token");
+    await this.context.globalState.update("slack-workspace-name", undefined);
+    this.client = null;
+  }
+
   // ── Private ───────────────────────────────────────────
 
-  private getToken(): string {
-    return vscode.workspace
-      .getConfiguration("businessContext")
-      .get<string>("slack.userToken", "");
+  private async getToken(): Promise<string | undefined> {
+    // Try SecretStorage first (OAuth token)
+    const oauthToken = await this.context.secrets.get("slack-bot-token");
+    if (oauthToken) return oauthToken;
+
+    // Fallback to manual token in settings (legacy support)
+    const config = vscode.workspace.getConfiguration("businessContext");
+    return config.get<string>("slack.userToken");
   }
 
   private getMaxSearchResults(): number {
@@ -205,8 +317,8 @@ export class SlackProvider implements BusinessContextProvider {
       .get<number>("maxThreadMessages", 50);
   }
 
-  private getClient(): WebClient {
-    const token = this.getToken();
+  private async getClient(): Promise<WebClient> {
+    const token = await this.getToken();
     if (!this.client || (this.client as any).token !== token) {
       this.client = new WebClient(token);
     }
