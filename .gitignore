@@ -5,3 +5,4 @@ dist/
 notes.md
 .claude/
 plans/
+.vscode/settings.json
