@@ -521,6 +521,24 @@ class SDKConversationImpl implements SDKConversation {
                   input: Record<string, unknown>,
                   options: { decisionReason?: string; toolUseID: string }
                 ) => {
+                  // Emit the tool call to the webview so the user sees it.
+                  // We emit HERE instead of the streaming handler so tool calls
+                  // appear one at a time — the streaming handler would dump ALL
+                  // tool calls at once before any permission prompt is resolved.
+                  // Suppressed tools (AskUserQuestion, ExitPlanMode, etc.) have
+                  // their own custom UI messages emitted below.
+                  const suppressedTools = new Set([
+                    "AskUserQuestion", "EnterPlanMode", "ExitPlanMode", "Task",
+                  ]);
+                  if (!suppressedTools.has(toolName)) {
+                    this.onMessage({
+                      type: "sdk-tool-call",
+                      toolName,
+                      input: JSON.stringify(input, null, 2),
+                      toolCallId: options.toolUseID,
+                    });
+                  }
+
                   // AskUserQuestion: render an interactive multiple-choice UI in
                   // the webview instead of the generic Allow/Deny permission prompt.
                   // The user's selections are injected back into the tool input via
@@ -642,10 +660,10 @@ class SDKConversationImpl implements SDKConversation {
                   messageId: msg.uuid ?? "",
                 });
               } else if (block.type === "tool_use") {
-                // Skip rendering AskUserQuestion as a generic tool call —
-                // it gets its own interactive UI via the "user-question" message
-                // sent from canUseTool below.
+                // Tools with custom UI or suppressed output — never emit as
+                // generic sdk-tool-call (they have their own messages).
                 if (block.name === "AskUserQuestion") break;
+                if (block.name === "EnterPlanMode") break;
                 if (block.name === "ExitPlanMode") break;
 
                 // Skip Task tool calls — subagents produce their own streamed
@@ -653,12 +671,19 @@ class SDKConversationImpl implements SDKConversation {
                 // JSON is noise. The todo list and results are what matter.
                 if (block.name === "Task") break;
 
-                this.onMessage({
-                  type: "sdk-tool-call",
-                  toolName: block.name,
-                  input: JSON.stringify(block.input, null, 2),
-                  toolCallId: block.id,
-                });
+                // When canUseTool is active (default/acceptEdits), we emit
+                // sdk-tool-call from canUseTool so tool calls appear one at a
+                // time alongside their permission prompts. Emitting here would
+                // show ALL tool calls at once before any permission is resolved.
+                // In bypassPermissions mode there's no canUseTool, so emit here.
+                if (this.options.permissionMode === "bypassPermissions") {
+                  this.onMessage({
+                    type: "sdk-tool-call",
+                    toolName: block.name,
+                    input: JSON.stringify(block.input, null, 2),
+                    toolCallId: block.id,
+                  });
+                }
               }
             }
             break;
