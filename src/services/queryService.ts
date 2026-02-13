@@ -37,7 +37,6 @@ export interface QueryOutput {
 export interface QueryServiceConfig {
   maxSearchResults: number;
   maxThreadMessages: number;
-  autoApprove: boolean;
 }
 
 export interface QueryResult {
@@ -207,7 +206,6 @@ export async function executeQuery(params: {
   const result = await agent.execute({
     prompt: contextPrompt,
     workingDirectory: workDir,
-    autoApprove: config.autoApprove,
     onOutput: (text) => output.agentOutput(text),
     onError: (text) => output.agentError(text),
   });

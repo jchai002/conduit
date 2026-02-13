@@ -6,7 +6,6 @@
 export interface CodingAgentOptions {
   prompt: string;
   workingDirectory: string;
-  autoApprove?: boolean;
   onOutput?: (text: string) => void;
   onError?: (text: string) => void;
 }

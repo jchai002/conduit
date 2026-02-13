@@ -139,7 +139,6 @@ function getConfig() {
   return {
     contextProvider: config.get<string>("contextProvider", "slack"),
     codingAgent: config.get<string>("codingAgent", "claude-code"),
-    autoApprove: config.get<boolean>("claude.yoloMode", false),
     maxSearchResults: config.get<number>("maxSearchResults", 20),
     maxThreadMessages: config.get<number>("maxThreadMessages", 50),
   };

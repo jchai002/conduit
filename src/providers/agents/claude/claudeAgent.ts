@@ -18,14 +18,10 @@ export class ClaudeAgent implements CodingAgent {
   }
 
   async execute(options: CodingAgentOptions): Promise<CodingAgentResult> {
-    const { prompt, workingDirectory, autoApprove, onOutput, onError } = options;
+    const { prompt, workingDirectory, onOutput, onError } = options;
 
     return new Promise((resolve) => {
       const args = ["--print", prompt];
-
-      if (autoApprove) {
-        args.unshift("--dangerously-skip-permissions");
-      }
 
       let child: ChildProcess;
       try {

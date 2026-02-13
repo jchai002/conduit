@@ -132,6 +132,9 @@ export interface SDKConversation {
   /** Called when the user answers an AskUserQuestion prompt in the webview.
    *  Injects their answers into the tool input via `updatedInput` and allows execution. */
   handleUserQuestionResponse(requestId: string, answers: Record<string, string>): void;
+  /** Updates the permission mode for subsequent queries. Called when the user
+   *  toggles the permission mode in the UI mid-conversation. */
+  setPermissionMode(mode: "default" | "acceptEdits" | "bypassPermissions"): void;
   readonly isRunning: boolean;
   /** The SDK-assigned session ID. Null until the first response arrives. */
   readonly sessionId: string | null;
@@ -421,6 +424,12 @@ class SDKConversationImpl implements SDKConversation {
     this.pendingPermissions.delete(requestId);
     const updatedInput = { ...entry.input, answers };
     entry.resolve({ behavior: "allow", updatedInput, toolUseID: entry.toolUseID });
+  }
+
+  /** Updates the permission mode so the next query/followUp uses it.
+   *  Called when the user toggles the permission mode in the UI mid-conversation. */
+  setPermissionMode(mode: "default" | "acceptEdits" | "bypassPermissions"): void {
+    this.options = { ...this.options, permissionMode: mode };
   }
 
   /**

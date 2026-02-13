@@ -20,7 +20,6 @@ export class MockAgent implements CodingAgent {
       options.prompt,
       "",
       `Working directory: ${options.workingDirectory}`,
-      `Auto-approve: ${options.autoApprove ?? false}`,
       "",
       "Mock agent does not modify any files. Use a real agent (e.g. Claude Code) for actual implementation.",
     ].join("\n");

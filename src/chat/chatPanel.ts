@@ -28,7 +28,6 @@ import type { ExtensionToWebviewMessage, PermissionModeValue, WebviewToExtension
 export interface ChatPanelConfig {
   contextProvider: string;
   codingAgent: string;
-  autoApprove: boolean;
   maxSearchResults: number;
   maxThreadMessages: number;
 }
@@ -69,9 +68,8 @@ export class ChatPanel {
     this.sessionStore = new SessionStore(context.workspaceState);
     this.panel.webview.html = this.getHtml();
 
-    // Initialize permission mode from config (actual sync happens on "webview-ready")
-    const initialConfig = getConfig();
-    this.permissionMode = initialConfig.autoApprove ? "bypassPermissions" : "acceptEdits";
+    // Permission mode defaults to "acceptEdits" (auto-approve file edits,
+    // ask before scripts). User can toggle via the UI at any time.
 
     this.panel.webview.onDidReceiveMessage(
       (msg) => this.handleMessage(msg),
@@ -176,6 +174,8 @@ export class ChatPanel {
         break;
       case "set-permission-mode":
         this.permissionMode = msg.mode;
+        // Update the active conversation so the next query uses the new mode
+        this.sdkConversation?.setPermissionMode(msg.mode);
         // Echo back so the webview updates its UI state
         this.post({ type: "permission-mode", mode: msg.mode });
         break;
@@ -256,7 +256,6 @@ export class ChatPanel {
         config: {
           maxSearchResults: config.maxSearchResults,
           maxThreadMessages: config.maxThreadMessages,
-          autoApprove: config.autoApprove,
         },
         progress: {
           report: (msg) => this.post({ type: "progress", text: msg }),

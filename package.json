@@ -98,12 +98,6 @@
           "description": "HTTPS proxy URL for Slack OAuth redirect (e.g. https://your-proxy.workers.dev). The proxy receives the OAuth callback and redirects to VS Code.",
           "order": 13
         },
-        "businessContext.claude.yoloMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "DANGEROUS: Let the coding agent auto-execute ALL tool calls without approval, including file writes, deletions, and shell commands that can harm your system. By enabling this, you accept full responsibility for any ensuing destruction.",
-          "order": 20
-        },
         "businessContext.maxSearchResults": {
           "type": "number",
           "default": 20,
