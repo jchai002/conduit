@@ -10,6 +10,7 @@ import type { PermissionRequestItem } from "../../context/types";
 import { useExtensionState } from "../../context/ExtensionStateContext";
 import { usePostMessage } from "../../hooks/usePostMessage";
 import { UserResponsePanel } from "./tools/UserResponsePanel";
+import { ToolInputPreview } from "./tools/ToolInputPreview";
 
 interface PermissionRequestProps {
   item: PermissionRequestItem;
@@ -42,7 +43,7 @@ export function PermissionRequest({ item }: PermissionRequestProps) {
         post({ type: "permission-response", requestId: item.requestId, behavior });
       }}
     >
-      <div className="message-content tool-input">{item.input}</div>
+      <ToolInputPreview toolName={item.toolName} input={item.input} />
     </UserResponsePanel>
   );
 }
