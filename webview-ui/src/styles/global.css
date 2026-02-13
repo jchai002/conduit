@@ -311,6 +311,8 @@ body {
 
 .message.user .message-content {
   color: var(--vscode-foreground);
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 /* Assistant messages — clean text, branded accent */
@@ -970,7 +972,7 @@ body {
   border-radius: 3px;
   border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
   background: rgba(0, 0, 0, 0.1);
-  max-height: 200px;
+  max-height: 60vh;
   overflow-y: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
