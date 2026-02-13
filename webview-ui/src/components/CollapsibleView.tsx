@@ -72,6 +72,17 @@ export function CollapsibleView({
         className="collapsible-content"
         style={expanded ? { maxHeight: "60vh", overflowY: "auto" } : { maxHeight: collapsedHeight, overflow: "hidden" }}
       >
+        {/* Close button inside the content so it sits within the border.
+          * Uses sticky positioning to stay at the top while scrolling. */}
+        {expanded && (
+          <button
+            className="collapsible-btn collapsible-close-btn"
+            onClick={() => setExpanded(false)}
+            title="Collapse"
+          >
+            ✕
+          </button>
+        )}
         {children}
       </div>
 
@@ -86,17 +97,6 @@ export function CollapsibleView({
             Expand ↓
           </button>
         </div>
-      )}
-
-      {/* Close button — only in expanded state */}
-      {expanded && (
-        <button
-          className="collapsible-btn collapsible-close-btn"
-          onClick={() => setExpanded(false)}
-          title="Collapse"
-        >
-          ✕
-        </button>
       )}
     </div>
   );

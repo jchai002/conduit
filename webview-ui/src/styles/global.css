@@ -495,20 +495,20 @@ body {
   position: relative;
 }
 
-/* Gradient fade at the bottom of collapsed content — signals more below */
+/* Border + padding when content overflows (collapsed or expanded).
+   Applied to the outer wrapper so both content and buttons are inside. */
+.collapsible-collapsed,
+.collapsible-expanded {
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.15));
+  border-radius: 3px;
+  padding: 8px;
+}
+
+/* Expand button container — bottom-right inside the border */
 .collapsible-fade {
-  position: relative;
-  height: 32px;
-  margin-top: -32px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--vscode-sideBar-background, #1e1e1e)
-  );
   display: flex;
-  align-items: flex-end;
   justify-content: flex-end;
-  pointer-events: none;
+  margin-top: 4px;
 }
 
 /* Shared button base for expand/close */
@@ -535,23 +535,25 @@ body {
   background: var(--vscode-button-secondaryHoverBackground, #45494e);
 }
 
-/* Expand button — sits inside the fade gradient */
+/* Expand button — bottom-right below content */
 .collapsible-expand-btn {
-  margin: 0 4px 4px 0;
+  margin: 0;
 }
 
-/* Close button — top-right corner, sticky so it stays visible while scrolling */
+/* Close button — upper-right corner inside the border, sticky so it
+   stays visible while scrolling the expanded content. Always visible
+   (not gated behind hover) since expanded state needs a clear exit. */
 .collapsible-close-btn {
   position: sticky;
   top: 4px;
   float: right;
-  margin: 4px 4px 0 0;
+  margin: 4px 4px -16px 0;
   z-index: 2;
-  opacity: 0.7;
+  opacity: 0.7 !important;
 }
 
 .collapsible-close-btn:hover {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 /* Tool calls — amber left accent, compact */
@@ -982,7 +984,9 @@ body {
   cursor: default;
 }
 
-.question-resolved {
+/* Resolved state — only dim the question/answer sections, not the
+   children content (plan text, tool preview) or the label. */
+.question-resolved .question-section {
   opacity: 0.5;
 }
 
@@ -1017,16 +1021,11 @@ body {
   margin-bottom: 3px;
 }
 
-/* Plan text block — styled content inside CollapsibleView */
+/* Plan text block — inside CollapsibleView which provides the border */
 .plan-text {
   font-size: 12px;
   line-height: 1.55;
   color: var(--vscode-foreground);
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  border-radius: 3px;
-  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
-  background: rgba(0, 0, 0, 0.1);
   white-space: pre-wrap;
   word-wrap: break-word;
 }
