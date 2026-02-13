@@ -101,6 +101,11 @@ export function ToolInputPreview({ toolName, input }: ToolInputPreviewProps) {
       );
     }
 
+    case "WebSearch": {
+      const query = (parsed.query as string) || "";
+      return <div className="search-query">{query}</div>;
+    }
+
     default:
       return <div className="message-content tool-input">{input}</div>;
   }

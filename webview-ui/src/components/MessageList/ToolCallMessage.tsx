@@ -12,6 +12,7 @@ import { BashTool } from "./tools/BashTool";
 import { ReadTool } from "./tools/ReadTool";
 import { GlobTool } from "./tools/GlobTool";
 import { GrepTool } from "./tools/GrepTool";
+import { WebSearchTool } from "./tools/WebSearchTool";
 import { GenericTool } from "./tools/GenericTool";
 
 interface ToolCallMessageProps {
@@ -32,6 +33,8 @@ export function ToolCallMessage({ tool }: ToolCallMessageProps) {
       return <GlobTool tool={tool} />;
     case "Grep":
       return <GrepTool tool={tool} />;
+    case "WebSearch":
+      return <WebSearchTool tool={tool} />;
     default:
       return <GenericTool tool={tool} />;
   }
