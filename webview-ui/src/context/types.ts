@@ -101,6 +101,9 @@ export interface AppState {
   permissionMode: PermissionModeValue;
   messages: MessageItem[];
   sessions: SessionMeta[];
+  /** Title of the active conversation — shown in the header dropdown button.
+   *  Set when a session is opened or when the user sends the first message. */
+  currentSessionTitle: string;
   /** Tracks whether the Claude CLI is ready for use.
    *  null = not yet checked (initial state), object = check completed.
    *  We use null to avoid flashing the setup screen before the check runs. */
@@ -119,6 +122,7 @@ export const initialState: AppState = {
   permissionMode: "default",
   messages: [],
   sessions: [],
+  currentSessionTitle: "",
   setupStatus: null,
   slackStatus: null,
 };
@@ -152,7 +156,7 @@ export type Action =
   | { type: "ext/setup-status"; cliInstalled: boolean; cliAuthenticated: boolean }
   | { type: "ext/slack-status"; connected: boolean; workspaceName?: string }
   | { type: "ext/session-list"; sessions: SessionMeta[] }
-  | { type: "ext/session-opened"; messages: Array<
+  | { type: "ext/session-opened"; title: string; messages: Array<
       | { role: "user"; text: string }
       | { role: "assistant"; text: string }
       | { role: "tool-call"; text: string; toolName: string; toolCallId: string }

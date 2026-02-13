@@ -155,16 +155,16 @@ describe("appReducer", () => {
 
   // ── Session messages ──
 
-  it("ext/session-list updates sessions and shows session list", () => {
+  it("ext/session-list updates sessions", () => {
     const sessions = [{ sessionId: "s1", title: "Chat 1", updatedAt: Date.now(), messageCount: 5 }];
     const state = appReducer(initialState, { type: "ext/session-list", sessions });
     expect(state.sessions).toEqual(sessions);
-    expect(state.showSessionList).toBe(true);
   });
 
   it("ext/session-opened converts stored messages to MessageItems", () => {
     const state = appReducer(initialState, {
       type: "ext/session-opened",
+      title: "Hello",
       messages: [
         { role: "user", text: "Hello" },
         { role: "assistant", text: "Hi there" },
@@ -175,6 +175,7 @@ describe("appReducer", () => {
     expect(state.messages).toHaveLength(3); // user, assistant, tool-call (result merged)
     expect(state.showSessionList).toBe(false);
     expect(state.inConversation).toBe(true);
+    expect(state.currentSessionTitle).toBe("Hello");
     // Tool call should have its result
     const tc = state.messages[2];
     if (tc.kind === "tool-call") {

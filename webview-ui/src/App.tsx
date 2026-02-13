@@ -19,7 +19,6 @@ import { SetupScreen } from "./components/SetupScreen";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { ProviderConnection } from "./components/ProviderConnection";
 import { StatusBar } from "./components/StatusBar";
-import { SessionList } from "./components/SessionList/SessionList";
 import { MessageList } from "./components/MessageList/MessageList";
 import { InputArea } from "./components/InputArea/InputArea";
 
@@ -53,7 +52,6 @@ function AppContent() {
     <>
       <Header />
       {!setupNeeded && <ProviderConnection />}
-      {state.showSessionList && <SessionList />}
       <div id="messages" ref={scrollRef}>
         {setupNeeded ? (
           <SetupScreen />

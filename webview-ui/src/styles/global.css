@@ -146,10 +146,11 @@ body {
   display: flex;
   gap: 6px;
   margin-left: auto;
+  align-items: stretch;
 }
 
 .header-btn {
-  padding: 3px 10px;
+  padding: 0 10px;
   border-radius: 4px;
   border: 1px solid var(--vscode-panel-border, #333);
   background: var(--vscode-input-background, #1e1e1e);
@@ -157,6 +158,7 @@ body {
   font-size: 11px;
   cursor: pointer;
   white-space: nowrap;
+  line-height: 26px;
 }
 
 .header-btn:hover {
@@ -164,62 +166,72 @@ body {
 }
 
 .header-btn-new {
-  border-color: var(--vscode-terminal-ansiGreen, #4d9375);
-  color: var(--vscode-terminal-ansiGreen, #4d9375);
+  border-color: #e8875a;
+  color: #e8875a;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 8px;
 }
 
-/* Session list */
-.session-list {
-  border-bottom: 1px solid var(--vscode-panel-border, #333);
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.session-list-header {
+/* Session selector button — shows current conversation title + chevron */
+.session-selector-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 20px;
-  border-bottom: 1px solid var(--vscode-panel-border, #333);
+  gap: 6px;
+  width: 360px;
+  border-color: #e8875a;
 }
 
-.session-list-title {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--vscode-descriptionForeground);
+.session-selector-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
-.session-list-new-btn {
-  padding: 2px 8px;
-  border-radius: 3px;
-  border: 1px solid var(--vscode-terminal-ansiGreen, #4d9375);
-  background: transparent;
-  color: var(--vscode-terminal-ansiGreen, #4d9375);
-  font-size: 11px;
-  cursor: pointer;
+.session-selector-chevron {
+  font-size: 10px;
+  opacity: 0.6;
+  transition: transform 0.15s;
 }
 
-.session-list-new-btn:hover {
-  background: var(--vscode-list-hoverBackground, #2a2d2e);
+.session-selector-chevron.open {
+  transform: rotate(180deg);
 }
 
-.session-list-items {
+/* Session dropdown — floating menu anchored below the selector button */
+.session-dropdown-wrapper {
+  position: relative;
+}
+
+.session-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 500px;
+  max-height: 350px;
+  overflow-y: auto;
+  background: var(--vscode-dropdown-background, #252526);
+  border: 1px solid var(--vscode-panel-border, #333);
+  border-radius: 6px;
   padding: 4px 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.session-list-empty {
-  padding: 16px 20px;
+.session-dropdown-empty {
+  padding: 16px 12px;
   text-align: center;
   color: var(--vscode-descriptionForeground);
   font-size: 12px;
 }
 
+/* Session items — shared between old panel and new dropdown */
 .session-item {
   display: flex;
   align-items: center;
-  padding: 6px 20px;
+  padding: 6px 12px;
   cursor: pointer;
 }
 
@@ -233,7 +245,7 @@ body {
 }
 
 .session-item-title {
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

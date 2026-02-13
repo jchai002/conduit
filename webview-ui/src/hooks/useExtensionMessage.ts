@@ -129,7 +129,7 @@ export function useExtensionMessage() {
           dispatch({ type: "ext/session-list", sessions: msg.sessions });
           break;
         case "session-opened":
-          dispatch({ type: "ext/session-opened", messages: msg.messages });
+          dispatch({ type: "ext/session-opened", title: msg.meta.title, messages: msg.messages });
           break;
         case "session-cleared":
           dispatch({ type: "ext/session-cleared" });

@@ -242,7 +242,7 @@ export function appReducer(state: AppState, action: Action): AppState {
     // ── Session messages ──
 
     case "ext/session-list":
-      return { ...state, sessions: action.sessions, showSessionList: true };
+      return { ...state, sessions: action.sessions };
 
     case "ext/session-opened": {
       // Convert stored messages to MessageItems for rendering
@@ -296,6 +296,7 @@ export function appReducer(state: AppState, action: Action): AppState {
         showWelcome: false,
         showSessionList: false,
         inConversation: true,
+        currentSessionTitle: action.title,
         messages: items,
       };
     }
@@ -306,6 +307,7 @@ export function appReducer(state: AppState, action: Action): AppState {
         showWelcome: true,
         showSessionList: false,
         inConversation: false,
+        currentSessionTitle: "",
         messages: [],
       };
 
@@ -317,6 +319,8 @@ export function appReducer(state: AppState, action: Action): AppState {
         showWelcome: false,
         showSessionList: false,
         busy: true,
+        // Set the session title from the first user message (same as sessionStore)
+        currentSessionTitle: state.currentSessionTitle || action.text.slice(0, 80),
         messages: [...state.messages, chatMsg("user", action.text)],
       };
 
