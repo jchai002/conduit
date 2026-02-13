@@ -7,6 +7,7 @@
  */
 import type { ToolCall } from "../../../context/types";
 import { shortenPath } from "../../../utils/shortenPath";
+import { CollapsibleView } from "../../CollapsibleView";
 import { DiffBlock } from "./DiffBlock";
 import { ToolResult } from "./ToolResult";
 
@@ -32,7 +33,9 @@ export function WriteTool({ tool }: WriteToolProps) {
       <div className="diff-file-path" title={filePath}>
         {shortenPath(filePath)} (new)
       </div>
-      <DiffBlock addedLines={lines} maxLines={40} />
+      <CollapsibleView>
+        <DiffBlock addedLines={lines} maxLines={40} />
+      </CollapsibleView>
       <ToolResult result={tool.result} />
     </div>
   );

@@ -4,6 +4,7 @@
  * label and the raw JSON input in a scrollable monospace block.
  */
 import type { ToolCall } from "../../../context/types";
+import { CollapsibleView } from "../../CollapsibleView";
 import { ToolResult } from "./ToolResult";
 
 interface GenericToolProps {
@@ -14,7 +15,9 @@ export function GenericTool({ tool }: GenericToolProps) {
   return (
     <div className="message tool-call" data-tool-call-id={tool.toolCallId}>
       <div className="message-label">{tool.toolName}</div>
-      <div className="message-content tool-input">{tool.input}</div>
+      <CollapsibleView>
+        <div className="message-content tool-input">{tool.input}</div>
+      </CollapsibleView>
       <ToolResult result={tool.result} />
     </div>
   );

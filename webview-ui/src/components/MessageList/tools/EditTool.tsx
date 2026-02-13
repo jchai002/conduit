@@ -6,6 +6,7 @@
  */
 import type { ToolCall } from "../../../context/types";
 import { shortenPath } from "../../../utils/shortenPath";
+import { CollapsibleView } from "../../CollapsibleView";
 import { DiffBlock } from "./DiffBlock";
 import { ToolResult } from "./ToolResult";
 
@@ -33,7 +34,9 @@ export function EditTool({ tool }: EditToolProps) {
       <div className="diff-file-path" title={filePath}>
         {shortenPath(filePath)}
       </div>
-      <DiffBlock removedLines={oldLines} addedLines={newLines} />
+      <CollapsibleView>
+        <DiffBlock removedLines={oldLines} addedLines={newLines} />
+      </CollapsibleView>
       <ToolResult result={tool.result} />
     </div>
   );
