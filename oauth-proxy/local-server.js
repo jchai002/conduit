@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
     const error = url.searchParams.get("error");
 
     if (error) {
-      res.writeHead(200, { "Content-Type": "tengrok http 3456xt/html" });
+      res.writeHead(200, { "Content-Type": "text/html" });
       res.end(`<h2>Slack authorization failed</h2><p>Error: ${error}</p>`);
       return;
     }
