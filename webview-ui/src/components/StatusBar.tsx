@@ -71,7 +71,14 @@ export function StatusBar() {
     };
   }, [state.busy]);
 
-  // Agent running → show animated cycling words
+  // Explicit status text (e.g. "Compacting context...") takes priority over
+  // the fun cycling words — the extension only sets statusText when it has
+  // something meaningful to communicate.
+  if (state.statusText) {
+    return <div id="status">{state.statusText}</div>;
+  }
+
+  // Agent running with no explicit status → show animated cycling words
   if (state.busy) {
     return (
       <div
@@ -81,11 +88,6 @@ export function StatusBar() {
         {word}
       </div>
     );
-  }
-
-  // Not busy, but extension sent status text → show it statically
-  if (state.statusText) {
-    return <div id="status">{state.statusText}</div>;
   }
 
   return null;

@@ -111,6 +111,15 @@ export interface AppState {
   /** Tracks Slack connection status.
    *  null = not yet checked, object = check completed. */
   slackStatus: { connected: boolean; workspaceName?: string } | null;
+  /** Context window usage — updated after each SDK turn completes.
+   *  null = no data yet (first message hasn't finished). */
+  contextUsage: {
+    contextWindow: number;
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadTokens: number;
+    cacheCreationTokens: number;
+  } | null;
 }
 
 export const initialState: AppState = {
@@ -125,6 +134,7 @@ export const initialState: AppState = {
   currentSessionTitle: "",
   setupStatus: null,
   slackStatus: null,
+  contextUsage: null,
 };
 
 /**
@@ -147,7 +157,9 @@ export type Action =
   | { type: "ext/sdk-text"; text: string; messageId: string }
   | { type: "ext/sdk-tool-call"; toolName: string; input: string; toolCallId: string }
   | { type: "ext/sdk-tool-result"; toolCallId: string; result: string }
-  | { type: "ext/sdk-done"; cost?: number; duration?: number; result?: string }
+  | { type: "ext/sdk-done"; cost?: number; duration?: number; result?: string;
+      contextWindow?: number; inputTokens?: number; outputTokens?: number;
+      cacheReadTokens?: number; cacheCreationTokens?: number }
   | { type: "ext/sdk-error"; text: string }
   | { type: "ext/permission-request"; requestId: string; toolName: string; input: string; reason?: string }
   | { type: "ext/user-question"; requestId: string; questions: UserQuestionItem["questions"] }

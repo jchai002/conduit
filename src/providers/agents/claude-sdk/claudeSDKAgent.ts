@@ -722,13 +722,34 @@ class SDKConversationImpl implements SDKConversation {
               this._sessionId = msg.session_id;
             }
 
+            // Extract context window usage from modelUsage — pick the first
+            // model's data (there's usually only one model per conversation).
+            const modelUsages = msg.modelUsage ? Object.values(msg.modelUsage) : [];
+            const mu = modelUsages[0];
+
             const successResult = msg.subtype === "success" ? msg.result : undefined;
             this.onMessage({
               type: "sdk-done",
               cost: msg.total_cost_usd,
               duration: msg.duration_ms,
               result: successResult,
+              contextWindow: mu?.contextWindow,
+              inputTokens: mu?.inputTokens,
+              outputTokens: mu?.outputTokens,
+              cacheReadTokens: mu?.cacheReadInputTokens,
+              cacheCreationTokens: mu?.cacheCreationInputTokens,
             });
+            break;
+          }
+
+          // "system" = Internal SDK events (compaction, status changes, init, etc.)
+          case "system": {
+            if ((msg as any).subtype === "status") {
+              const status = (msg as any).status as string | null;
+              if (status === "compacting") {
+                this.onMessage({ type: "status", text: "Compacting context..." });
+              }
+            }
             break;
           }
         }

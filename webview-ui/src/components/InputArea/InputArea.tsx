@@ -21,6 +21,7 @@ import { useRef, useState, useCallback } from "react";
 import { useExtensionState } from "../../context/ExtensionStateContext";
 import { usePostMessage } from "../../hooks/usePostMessage";
 import { PermissionToggle } from "../PermissionToggle";
+import { ContextUsage } from "../ContextUsage";
 
 export function InputArea() {
   const { state, dispatch } = useExtensionState();
@@ -87,6 +88,7 @@ export function InputArea() {
       <div className="input-toolbar">
         <div className="input-toolbar-left">
           <PermissionToggle />
+          <ContextUsage />
         </div>
         <div className="input-toolbar-right">
           {state.busy ? (

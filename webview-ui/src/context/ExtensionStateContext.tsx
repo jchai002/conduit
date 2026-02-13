@@ -160,7 +160,18 @@ export function appReducer(state: AppState, action: Action): AppState {
     }
 
     case "ext/sdk-done":
-      return { ...state, busy: false };
+      return {
+        ...state,
+        busy: false,
+        // Update context usage if the result includes token data
+        contextUsage: action.contextWindow ? {
+          contextWindow: action.contextWindow,
+          inputTokens: action.inputTokens ?? 0,
+          outputTokens: action.outputTokens ?? 0,
+          cacheReadTokens: action.cacheReadTokens ?? 0,
+          cacheCreationTokens: action.cacheCreationTokens ?? 0,
+        } : state.contextUsage,
+      };
 
     case "ext/sdk-error":
       return {
@@ -308,6 +319,7 @@ export function appReducer(state: AppState, action: Action): AppState {
         showSessionList: false,
         inConversation: false,
         currentSessionTitle: "",
+        contextUsage: null,
         messages: [],
       };
 

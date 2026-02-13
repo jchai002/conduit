@@ -71,7 +71,9 @@ export type ExtensionToWebviewMessage =
   | { type: "sdk-text"; text: string; messageId: string }
   | { type: "sdk-tool-call"; toolName: string; input: string; toolCallId: string }
   | { type: "sdk-tool-result"; toolCallId: string; result: string }
-  | { type: "sdk-done"; cost?: number; duration?: number; result?: string }
+  | { type: "sdk-done"; cost?: number; duration?: number; result?: string;
+      contextWindow?: number; inputTokens?: number; outputTokens?: number;
+      cacheReadTokens?: number; cacheCreationTokens?: number }
   | { type: "sdk-error"; text: string }
   // Permission prompt
   | { type: "permission-request"; requestId: string; toolName: string; input: string; reason?: string }

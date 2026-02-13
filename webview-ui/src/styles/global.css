@@ -870,6 +870,15 @@ body {
   color: var(--vscode-terminal-ansiRed, #e06c75);
 }
 
+/* Context window usage indicator */
+.context-usage {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.8;
+  cursor: default;
+  margin-left: 16px;
+}
+
 /* ── AskUserQuestion — interactive multiple choice ── */
 
 .message.user-question {

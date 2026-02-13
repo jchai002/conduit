@@ -73,6 +73,11 @@ export function useExtensionMessage() {
             cost: msg.cost,
             duration: msg.duration,
             result: msg.result,
+            contextWindow: msg.contextWindow,
+            inputTokens: msg.inputTokens,
+            outputTokens: msg.outputTokens,
+            cacheReadTokens: msg.cacheReadTokens,
+            cacheCreationTokens: msg.cacheCreationTokens,
           });
           break;
         case "sdk-error":
