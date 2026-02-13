@@ -763,67 +763,8 @@ body {
   opacity: 0.7;
 }
 
-.permission-buttons {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.permission-btn {
-  padding: 4px 14px;
-  border-radius: 3px;
-  border: 1px solid transparent;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.permission-btn-allow {
-  background: transparent;
-  border-color: var(--vscode-terminal-ansiGreen, #4d9375);
-  color: var(--vscode-terminal-ansiGreen, #4d9375);
-}
-
-.permission-btn-allow:hover {
-  background: var(--vscode-terminal-ansiGreen, #4d9375);
-  color: #fff;
-}
-
-.permission-btn-deny {
-  background: transparent;
-  border-color: var(--vscode-terminal-ansiRed, #e06c75);
-  color: var(--vscode-terminal-ansiRed, #e06c75);
-}
-
-.permission-btn-deny:hover {
-  background: var(--vscode-terminal-ansiRed, #e06c75);
-  color: #fff;
-}
-
-.permission-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.permission-resolved {
-  opacity: 0.5;
-}
-
-.permission-status {
-  font-size: 11px;
-  font-weight: 600;
-  margin-top: 6px;
-  letter-spacing: 0.3px;
-}
-
-.permission-status.permission-allow {
-  color: var(--vscode-terminal-ansiGreen, #4d9375);
-}
-
-.permission-status.permission-deny {
-  color: var(--vscode-terminal-ansiRed, #e06c75);
-}
+/* Permission requests now reuse .question-option and .question-resolved
+   classes from the shared interactive card styles below. */
 
 .permission-toggle {
   padding: 2px 8px;

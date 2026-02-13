@@ -11,7 +11,7 @@ import { ChatMessage } from "./ChatMessage";
 import { ToolCallMessage } from "./ToolCallMessage";
 import { PermissionRequest } from "./PermissionRequest";
 import { TodoList } from "./TodoList";
-import { UserResponsePanel } from "./tools/UserResponsePanel";
+import { UserQuestion } from "./UserQuestion";
 
 export function MessageList() {
   const { state } = useExtensionState();
@@ -29,7 +29,7 @@ export function MessageList() {
           case "todo-list":
             return <TodoList key={item.id} item={item} />;
           case "user-question":
-            return <UserResponsePanel key={item.id} item={item} />;
+            return <UserQuestion key={item.id} item={item} />;
         }
       })}
     </>

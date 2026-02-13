@@ -1,17 +1,15 @@
 /**
- * Renders a permission request from Claude — shows the tool name,
- * optional reason, the input being requested, and Allow/Deny buttons.
+ * Thin wrapper that converts a PermissionRequestItem into generic
+ * UserResponsePanel props.
  *
- * When the user clicks Allow or Deny, the component:
- * 1. Dispatches ui/resolve-permission to mark it resolved in state
- * 2. Sends a permission-response message to the extension
- *
- * After resolving, buttons are replaced with a status label and
- * the whole block dims (via .permission-resolved CSS class).
+ * Shows the tool name as the label, the tool input as content, and
+ * Allow/Deny as clickable option cards. Handles dispatching the
+ * response to state and posting it to the extension.
  */
 import type { PermissionRequestItem } from "../../context/types";
 import { useExtensionState } from "../../context/ExtensionStateContext";
 import { usePostMessage } from "../../hooks/usePostMessage";
+import { UserResponsePanel } from "./tools/UserResponsePanel";
 
 interface PermissionRequestProps {
   item: PermissionRequestItem;
@@ -21,39 +19,30 @@ export function PermissionRequest({ item }: PermissionRequestProps) {
   const { dispatch } = useExtensionState();
   const post = usePostMessage();
 
-  function handleResponse(behavior: "allow" | "deny") {
-    dispatch({ type: "ui/resolve-permission", requestId: item.requestId, behavior });
-    post({ type: "permission-response", requestId: item.requestId, behavior });
-  }
-
   return (
-    <div
-      className={`message permission-request${item.resolved ? " permission-resolved" : ""}`}
-      data-request-id={item.requestId}
+    <UserResponsePanel
+      className="permission-request"
+      label={item.toolName}
+      questions={[{
+        header: "Action",
+        text: item.reason || "Allow this tool call?",
+        options: [
+          { label: "Allow", description: "Permit this tool call to execute" },
+          { label: "Deny", description: "Block this tool call" },
+        ],
+      }]}
+      resolvedAnswers={
+        item.resolved
+          ? { Action: item.resolved === "allow" ? "Allowed" : "Denied" }
+          : undefined
+      }
+      onSubmit={(answers) => {
+        const behavior = answers.Action === "Allow" ? "allow" as const : "deny" as const;
+        dispatch({ type: "ui/resolve-permission", requestId: item.requestId, behavior });
+        post({ type: "permission-response", requestId: item.requestId, behavior });
+      }}
     >
-      <div className="message-label">{item.toolName}</div>
-      {item.reason && <div className="permission-reason">{item.reason}</div>}
       <div className="message-content tool-input">{item.input}</div>
-      {item.resolved ? (
-        <div className={`permission-status permission-${item.resolved}`}>
-          {item.resolved === "allow" ? "allowed" : "denied"}
-        </div>
-      ) : (
-        <div className="permission-buttons">
-          <button
-            className="permission-btn permission-btn-allow"
-            onClick={() => handleResponse("allow")}
-          >
-            allow
-          </button>
-          <button
-            className="permission-btn permission-btn-deny"
-            onClick={() => handleResponse("deny")}
-          >
-            deny
-          </button>
-        </div>
-      )}
-    </div>
+    </UserResponsePanel>
   );
 }
