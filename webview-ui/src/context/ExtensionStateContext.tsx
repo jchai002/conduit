@@ -218,6 +218,37 @@ export function appReducer(state: AppState, action: Action): AppState {
             items.push(chatMsg(m.role, m.text));
             break;
           case "tool-call":
+            // Reconstruct specialized items for tools that have custom renderers
+            if (m.toolName === "TodoWrite") {
+              try {
+                const data = JSON.parse(m.text);
+                if (data.todos && Array.isArray(data.todos)) {
+                  items.push({
+                    id: uid(),
+                    kind: "todo-list",
+                    toolCallId: m.toolCallId,
+                    todos: data.todos,
+                  });
+                  break;
+                }
+              } catch { /* fall through to generic */ }
+            }
+            if (m.toolName === "AskUserQuestion") {
+              try {
+                const data = JSON.parse(m.text);
+                if (data && Array.isArray(data)) {
+                  // Stored as JSON.stringify(questions) in bufferAndForward
+                  items.push({
+                    id: uid(),
+                    kind: "user-question",
+                    requestId: m.toolCallId,
+                    questions: data,
+                    answers: { _restored: "true" }, // mark as answered so it renders resolved
+                  });
+                  break;
+                }
+              } catch { /* fall through to generic */ }
+            }
             items.push({
               id: uid(),
               kind: "tool-call",
@@ -304,7 +335,11 @@ export function appReducer(state: AppState, action: Action): AppState {
   }
 }
 
-/** TodoWrite calls update an existing todo list in place (or create a new one) */
+/** TodoWrite calls remove the old checklist and add a fresh one at the bottom.
+ *  This keeps the todo list visible near the latest messages instead of
+ *  being stranded at the top where the user can't see updates. Each call
+ *  renders the full list (like Claude VS Code does), so the user always
+ *  sees the latest state of all tasks near where they're reading. */
 function handleTodoWrite(
   state: AppState,
   action: { toolName: string; input: string; toolCallId: string }
@@ -333,19 +368,9 @@ function handleTodoWrite(
     };
   }
 
-  // Check if a TodoListItem already exists — update it in place
-  const existingIdx = state.messages.findIndex((m) => m.kind === "todo-list");
-  if (existingIdx >= 0) {
-    const updated = [...state.messages];
-    updated[existingIdx] = {
-      ...(updated[existingIdx] as TodoListItem),
-      toolCallId: action.toolCallId,
-      todos,
-    };
-    return { ...state, showWelcome: false, messages: updated };
-  }
-
-  // No existing todo list — create a new one
+  // Always add a fresh checklist at the bottom. Old ones stay in place
+  // as a progress history — if the user scrolls up they can see earlier
+  // states with fewer items crossed out.
   const todoItem: TodoListItem = {
     id: uid(),
     kind: "todo-list",

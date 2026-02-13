@@ -596,6 +596,11 @@ class SDKConversationImpl implements SDKConversation {
                 // sent from canUseTool below.
                 if (block.name === "AskUserQuestion") break;
 
+                // Skip Task tool calls — subagents produce their own streamed
+                // output (sdk-text, sdk-tool-call, etc.), so the outer Task
+                // JSON is noise. The todo list and results are what matter.
+                if (block.name === "Task") break;
+
                 this.onMessage({
                   type: "sdk-tool-call",
                   toolName: block.name,
