@@ -19,10 +19,7 @@ import type {
   Action,
   MessageItem,
   ChatMessage,
-  ToolCall,
   PermissionRequestItem,
-  TodoItem,
-  TodoListItem,
   UserQuestionItem,
 } from "./types";
 import { initialState } from "./types";
@@ -38,6 +35,34 @@ function uid(): string {
 /** Create a ChatMessage item for the message list */
 function chatMsg(role: ChatMessage["role"], text: string): ChatMessage {
   return { id: uid(), kind: "chat-message", role, text };
+}
+
+/** Creates the appropriate MessageItem for a tool call based on toolName.
+ *  Known tools (TodoWrite, AskUserQuestion) get specialized items with custom
+ *  renderers. Everything else falls through to a generic ToolCall.
+ *
+ *  Used by BOTH live sdk-tool-call handling AND session restoration so the
+ *  rendering logic stays in one place. */
+function toolCallToItem(toolName: string, input: string, toolCallId: string): MessageItem {
+  if (toolName === "TodoWrite") {
+    try {
+      const data = JSON.parse(input);
+      if (data.todos && Array.isArray(data.todos)) {
+        return { id: uid(), kind: "todo-list", toolCallId, todos: data.todos };
+      }
+    } catch { /* fall through to generic */ }
+  }
+  if (toolName === "AskUserQuestion") {
+    try {
+      const data = JSON.parse(input);
+      if (Array.isArray(data)) {
+        // Stored as JSON.stringify(questions) in bufferAndForward.
+        // Rendered as resolved since the question was already answered.
+        return { id: uid(), kind: "user-question", requestId: toolCallId, questions: data, answers: { _restored: "true" } };
+      }
+    } catch { /* fall through to generic */ }
+  }
+  return { id: uid(), kind: "tool-call", toolCallId, toolName, input };
 }
 
 // ─── Reducer ────────────────────────────────────────────────
@@ -106,21 +131,11 @@ export function appReducer(state: AppState, action: Action): AppState {
       };
 
     case "ext/sdk-tool-call": {
-      // Special handling for TodoWrite: update existing todo list in place
-      if (action.toolName === "TodoWrite") {
-        return handleTodoWrite(state, action);
-      }
-      const toolCall: ToolCall = {
-        id: uid(),
-        kind: "tool-call",
-        toolCallId: action.toolCallId,
-        toolName: action.toolName,
-        input: action.input,
-      };
+      const item = toolCallToItem(action.toolName, action.input, action.toolCallId);
       return {
         ...state,
         showWelcome: false,
-        messages: [...state.messages, toolCall],
+        messages: [...state.messages, item],
       };
     }
 
@@ -218,44 +233,7 @@ export function appReducer(state: AppState, action: Action): AppState {
             items.push(chatMsg(m.role, m.text));
             break;
           case "tool-call":
-            // Reconstruct specialized items for tools that have custom renderers
-            if (m.toolName === "TodoWrite") {
-              try {
-                const data = JSON.parse(m.text);
-                if (data.todos && Array.isArray(data.todos)) {
-                  items.push({
-                    id: uid(),
-                    kind: "todo-list",
-                    toolCallId: m.toolCallId,
-                    todos: data.todos,
-                  });
-                  break;
-                }
-              } catch { /* fall through to generic */ }
-            }
-            if (m.toolName === "AskUserQuestion") {
-              try {
-                const data = JSON.parse(m.text);
-                if (data && Array.isArray(data)) {
-                  // Stored as JSON.stringify(questions) in bufferAndForward
-                  items.push({
-                    id: uid(),
-                    kind: "user-question",
-                    requestId: m.toolCallId,
-                    questions: data,
-                    answers: { _restored: "true" }, // mark as answered so it renders resolved
-                  });
-                  break;
-                }
-              } catch { /* fall through to generic */ }
-            }
-            items.push({
-              id: uid(),
-              kind: "tool-call",
-              toolCallId: m.toolCallId,
-              toolName: m.toolName,
-              input: m.text,
-            });
+            items.push(toolCallToItem(m.toolName, m.text, m.toolCallId));
             break;
           case "tool-result": {
             // Find the matching tool call and add the result
@@ -333,55 +311,6 @@ export function appReducer(state: AppState, action: Action): AppState {
     default:
       return state;
   }
-}
-
-/** TodoWrite calls remove the old checklist and add a fresh one at the bottom.
- *  This keeps the todo list visible near the latest messages instead of
- *  being stranded at the top where the user can't see updates. Each call
- *  renders the full list (like Claude VS Code does), so the user always
- *  sees the latest state of all tasks near where they're reading. */
-function handleTodoWrite(
-  state: AppState,
-  action: { toolName: string; input: string; toolCallId: string }
-): AppState {
-  let todos: TodoItem[] = [];
-  try {
-    const data = JSON.parse(action.input);
-    if (data.todos && Array.isArray(data.todos)) {
-      todos = data.todos;
-    }
-  } catch {
-    // If JSON parsing fails, show as regular tool call
-    return {
-      ...state,
-      showWelcome: false,
-      messages: [
-        ...state.messages,
-        {
-          id: uid(),
-          kind: "tool-call",
-          toolCallId: action.toolCallId,
-          toolName: action.toolName,
-          input: action.input,
-        },
-      ],
-    };
-  }
-
-  // Always add a fresh checklist at the bottom. Old ones stay in place
-  // as a progress history — if the user scrolls up they can see earlier
-  // states with fewer items crossed out.
-  const todoItem: TodoListItem = {
-    id: uid(),
-    kind: "todo-list",
-    toolCallId: action.toolCallId,
-    todos,
-  };
-  return {
-    ...state,
-    showWelcome: false,
-    messages: [...state.messages, todoItem],
-  };
 }
 
 // ─── Context ────────────────────────────────────────────────
