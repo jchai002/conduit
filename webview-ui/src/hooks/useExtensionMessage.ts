@@ -106,6 +106,13 @@ export function useExtensionMessage() {
             reason: msg.reason,
           });
           break;
+        case "user-question":
+          dispatch({
+            type: "ext/user-question",
+            requestId: msg.requestId,
+            questions: msg.questions,
+          });
+          break;
         case "permission-mode":
           dispatch({ type: "ext/permission-mode", mode: msg.mode });
           break;

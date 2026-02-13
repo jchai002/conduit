@@ -160,6 +160,12 @@ export class ChatPanel {
           msg.behavior
         );
         break;
+      case "user-question-response":
+        this.sdkConversation?.handleUserQuestionResponse(
+          msg.requestId,
+          msg.answers
+        );
+        break;
       case "set-permission-mode":
         this.permissionMode = msg.mode;
         // Echo back so the webview updates its UI state
@@ -442,6 +448,13 @@ export class ChatPanel {
         this.messageBuffer.push({
           role: "tool-call", text: msg.input.slice(0, 2000), toolName: msg.toolName,
           toolCallId: msg.toolCallId, timestamp: Date.now(),
+        });
+        break;
+      case "user-question":
+        // Persist AskUserQuestion as a tool-call so it shows in session history
+        this.messageBuffer.push({
+          role: "tool-call", text: JSON.stringify(msg.questions).slice(0, 2000),
+          toolName: "AskUserQuestion", toolCallId: msg.requestId, timestamp: Date.now(),
         });
         break;
       case "sdk-tool-result":

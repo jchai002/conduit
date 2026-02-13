@@ -56,8 +56,26 @@ export interface TodoListItem {
   todos: TodoItem[];
 }
 
+/** An AskUserQuestion prompt — Claude wants the user to pick from options.
+ *  Rendered as clickable option cards with a custom text input at the bottom.
+ *  Once answered, `answers` is set and the UI shows the resolved state. */
+export interface UserQuestionItem {
+  id: string;
+  kind: "user-question";
+  requestId: string;
+  questions: Array<{
+    question: string;
+    header: string;
+    options: Array<{ label: string; description: string }>;
+    multiSelect: boolean;
+  }>;
+  /** Maps question header → selected option label(s) or custom text.
+   *  Set when the user submits their answers. */
+  answers?: Record<string, string>;
+}
+
 /** Everything that can appear in the message list */
-export type MessageItem = ChatMessage | ToolCall | PermissionRequestItem | TodoListItem;
+export type MessageItem = ChatMessage | ToolCall | PermissionRequestItem | TodoListItem | UserQuestionItem;
 
 /** The complete webview state — managed by useReducer in the Context provider */
 export interface AppState {
@@ -114,6 +132,7 @@ export type Action =
   | { type: "ext/sdk-done"; cost?: number; duration?: number; result?: string }
   | { type: "ext/sdk-error"; text: string }
   | { type: "ext/permission-request"; requestId: string; toolName: string; input: string; reason?: string }
+  | { type: "ext/user-question"; requestId: string; questions: UserQuestionItem["questions"] }
   | { type: "ext/permission-mode"; mode: PermissionModeValue }
   | { type: "ext/setup-status"; cliInstalled: boolean; cliAuthenticated: boolean }
   | { type: "ext/slack-status"; connected: boolean; workspaceName?: string }
@@ -132,4 +151,5 @@ export type Action =
   | { type: "ui/set-busy"; busy: boolean }
   | { type: "ui/toggle-session-list" }
   | { type: "ui/hide-session-list" }
-  | { type: "ui/resolve-permission"; requestId: string; behavior: "allow" | "deny" };
+  | { type: "ui/resolve-permission"; requestId: string; behavior: "allow" | "deny" }
+  | { type: "ui/answer-question"; requestId: string; answers: Record<string, string> };

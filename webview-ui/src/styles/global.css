@@ -858,6 +858,143 @@ body {
   color: var(--vscode-terminal-ansiRed, #e06c75);
 }
 
+/* ── AskUserQuestion — interactive multiple choice ── */
+
+.message.user-question {
+  border-left-color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  padding-left: 18px;
+}
+
+.message.user-question .message-label {
+  color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.question-section {
+  margin-bottom: 12px;
+}
+
+.question-section:last-child {
+  margin-bottom: 0;
+}
+
+.question-header {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--vscode-badge-background, rgba(255,255,255,0.1));
+  color: var(--vscode-badge-foreground, var(--vscode-foreground));
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.question-text {
+  font-size: 13px;
+  color: var(--vscode-foreground);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.question-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.question-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.1));
+  background: var(--vscode-editor-background);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+
+.question-option:hover {
+  border-color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04));
+}
+
+.question-option.selected {
+  border-color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  background: rgba(198, 120, 221, 0.1);
+}
+
+.question-option-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.question-option-description {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.question-custom-input {
+  width: 100%;
+  padding: 6px 10px;
+  margin-top: 4px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-input-border, rgba(255,255,255,0.1));
+  background: var(--vscode-input-background, #1e1e1e);
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: 12px;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.question-custom-input:focus {
+  border-color: var(--vscode-focusBorder, #007acc);
+}
+
+.question-submit-btn {
+  margin-top: 8px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-terminal-ansiMagenta, #c678dd);
+  background: var(--vscode-terminal-ansiMagenta, #c678dd);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.question-submit-btn:hover {
+  opacity: 0.85;
+}
+
+.question-submit-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.question-resolved {
+  opacity: 0.5;
+}
+
+.question-answer {
+  font-size: 12px;
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
 .welcome {
   text-align: center;
   padding: 48px 20px;

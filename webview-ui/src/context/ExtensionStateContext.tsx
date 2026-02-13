@@ -23,6 +23,7 @@ import type {
   PermissionRequestItem,
   TodoItem,
   TodoListItem,
+  UserQuestionItem,
 } from "./types";
 import { initialState } from "./types";
 import type { WebviewToExtensionMessage } from "../types";
@@ -163,6 +164,20 @@ export function appReducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case "ext/user-question": {
+      const question: UserQuestionItem = {
+        id: uid(),
+        kind: "user-question",
+        requestId: action.requestId,
+        questions: action.questions,
+      };
+      return {
+        ...state,
+        showWelcome: false,
+        messages: [...state.messages, question],
+      };
+    }
+
     case "ext/permission-mode":
       return { ...state, permissionMode: action.mode };
 
@@ -272,6 +287,16 @@ export function appReducer(state: AppState, action: Action): AppState {
         return item;
       });
       return { ...state, messages: resolved };
+    }
+
+    case "ui/answer-question": {
+      const answered = state.messages.map((item) => {
+        if (item.kind === "user-question" && item.requestId === action.requestId) {
+          return { ...item, answers: action.answers };
+        }
+        return item;
+      });
+      return { ...state, messages: answered };
     }
 
     default:

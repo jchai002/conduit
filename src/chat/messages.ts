@@ -14,6 +14,21 @@ import type { SessionMeta, StoredMessage } from "./sessionStore";
 
 export type PermissionModeValue = "default" | "acceptEdits" | "bypassPermissions";
 
+/** A single option in an AskUserQuestion prompt (label + description). */
+export interface UserQuestionOption {
+  label: string;
+  description: string;
+}
+
+/** A single question within an AskUserQuestion tool call.
+ *  Claude can ask 1–4 questions at once, each with its own header and options. */
+export interface UserQuestionData {
+  question: string;
+  header: string;
+  options: UserQuestionOption[];
+  multiSelect: boolean;
+}
+
 /** Messages sent FROM the webview TO the extension host (user actions). */
 export type WebviewToExtensionMessage =
   | { type: "webview-ready" }
@@ -22,6 +37,8 @@ export type WebviewToExtensionMessage =
   | { type: "followup"; text: string }
   | { type: "cancel" }
   | { type: "permission-response"; requestId: string; behavior: "allow" | "deny" }
+  // AskUserQuestion — user selected options or typed custom text
+  | { type: "user-question-response"; requestId: string; answers: Record<string, string> }
   | { type: "set-permission-mode"; mode: PermissionModeValue }
   // Setup detection — user clicked "Check Again" or "Open Terminal" on setup screen
   | { type: "check-setup" }
@@ -56,6 +73,8 @@ export type ExtensionToWebviewMessage =
   | { type: "sdk-error"; text: string }
   // Permission prompt
   | { type: "permission-request"; requestId: string; toolName: string; input: string; reason?: string }
+  // AskUserQuestion — Claude wants the user to pick from options or type custom text
+  | { type: "user-question"; requestId: string; questions: UserQuestionData[] }
   // Permission mode sync
   | { type: "permission-mode"; mode: PermissionModeValue }
   // Setup status — sent on webview-ready and when user clicks "Check Again".

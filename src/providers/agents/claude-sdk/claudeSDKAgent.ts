@@ -129,6 +129,9 @@ export interface SDKConversation {
   cancel(): void;
   /** Called when the user clicks Allow/Deny on a permission prompt in the webview. */
   handlePermissionResponse(requestId: string, behavior: "allow" | "deny"): void;
+  /** Called when the user answers an AskUserQuestion prompt in the webview.
+   *  Injects their answers into the tool input via `updatedInput` and allows execution. */
+  handleUserQuestionResponse(requestId: string, answers: Record<string, string>): void;
   readonly isRunning: boolean;
   /** The SDK-assigned session ID. Null until the first response arrives. */
   readonly sessionId: string | null;
@@ -410,6 +413,16 @@ class SDKConversationImpl implements SDKConversation {
     }
   }
 
+  /** Resolves an AskUserQuestion prompt by injecting the user's answers into
+   *  the tool input. The SDK then executes the tool with answers already filled. */
+  handleUserQuestionResponse(requestId: string, answers: Record<string, string>): void {
+    const entry = this.pendingPermissions.get(requestId);
+    if (!entry) return;
+    this.pendingPermissions.delete(requestId);
+    const updatedInput = { ...entry.input, answers };
+    entry.resolve({ behavior: "allow", updatedInput, toolUseID: entry.toolUseID });
+  }
+
   /**
    * Core method — sends a message to Claude and streams back the response.
    *
@@ -475,6 +488,27 @@ class SDKConversationImpl implements SDKConversation {
                   input: Record<string, unknown>,
                   options: { decisionReason?: string; toolUseID: string }
                 ) => {
+                  // AskUserQuestion: render an interactive multiple-choice UI in
+                  // the webview instead of the generic Allow/Deny permission prompt.
+                  // The user's selections are injected back into the tool input via
+                  // `updatedInput.answers`, then the SDK executes the tool normally.
+                  if (toolName === "AskUserQuestion") {
+                    const requestId = `ask_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                    const questions = Array.isArray(input.questions) ? input.questions : [];
+                    this.onMessage({ type: "user-question", requestId, questions });
+                    const toolUseID = options.toolUseID;
+                    return new Promise((resolve) => {
+                      this.pendingPermissions.set(requestId, { toolUseID, input, resolve });
+                      setTimeout(() => {
+                        if (this.pendingPermissions.has(requestId)) {
+                          this.pendingPermissions.delete(requestId);
+                          resolve({ behavior: "deny", message: "Question timed out", toolUseID });
+                        }
+                      }, 5 * 60 * 1000);
+                    });
+                  }
+
+                  // All other tools: show the generic permission prompt.
                   const requestId = `perm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
                   this.onMessage({
                     type: "permission-request",
