@@ -1,0 +1,17 @@
+# Cloudflare Worker config for Conduit OAuth proxy.
+#
+# Before deploying:
+#   1. Create a KV namespace:  wrangler kv namespace create OAUTH_KV
+#   2. Copy the ID into the [[kv_namespaces]] block below
+#   3. Set secrets:
+#        wrangler secret put SLACK_CLIENT_ID
+#        wrangler secret put SLACK_CLIENT_SECRET
+#   4. Deploy:  wrangler deploy
+
+name = "conduit-oauth"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-09-01"
+
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "<PASTE_YOUR_KV_NAMESPACE_ID_HERE>"

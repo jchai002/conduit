@@ -247,51 +247,43 @@ export class SlackProvider implements BusinessContextProvider {
   }
 
   /**
-   * Exchanges OAuth authorization code for tokens.
-   * Slack returns both a bot token (xoxb-) and a user token (xoxp-).
-   * We store the user token because search.messages requires it.
+   * Retrieves the OAuth token from the Cloudflare Worker.
+   *
+   * The worker already exchanged the authorization code for a token
+   * server-side (so the client secret never touches the extension).
+   * The token is stashed in KV keyed by the state nonce. We fetch it
+   * from the worker's /exchange endpoint using the state parameter.
    */
-  async handleOAuthCallback(code: string): Promise<void> {
+  async handleOAuthCallback(state: string): Promise<void> {
     const config = vscode.workspace.getConfiguration("businessContext.slack");
-    const clientId = config.get<string>("clientId");
-    const clientSecret = config.get<string>("clientSecret");
+    const proxyUrl = config.get<string>("oauthProxyUrl");
 
-    if (!clientId || !clientSecret) {
-      throw new Error("Slack OAuth credentials not configured");
+    if (!proxyUrl) {
+      throw new Error(
+        "OAuth proxy URL not configured. Set businessContext.slack.oauthProxyUrl in settings."
+      );
     }
 
-    // Must match the redirect_uri used in initiateOAuth — Slack validates this
-    const redirectUri = this.getOAuthRedirectUri();
-
-    // Exchange code for token
-    const response = await fetch("https://slack.com/api/oauth.v2.access", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-        redirect_uri: redirectUri,
-      }),
-    });
-
-    const data = await response.json();
+    // Fetch token from the worker's /exchange endpoint.
+    const exchangeUrl = `${proxyUrl.replace(/\/+$/, "")}/exchange?state=${encodeURIComponent(state)}`;
+    const response = await fetch(exchangeUrl);
+    const data = (await response.json()) as { ok: boolean; error?: string; userToken?: string; teamName?: string };
 
     if (!data.ok) {
-      throw new Error(data.error || "OAuth token exchange failed");
+      throw new Error(data.error || "Token exchange failed");
     }
 
-    // Store the user token (xoxp-) for search.messages API.
-    // The user token is in authed_user.access_token, NOT data.access_token
-    // (which is the bot token). search.messages only works with user tokens.
-    const userToken = data.authed_user?.access_token;
-    if (!userToken) {
-      throw new Error("No user token returned. Make sure search:read is in user_scope.");
+    if (!data.userToken) {
+      throw new Error("No user token returned from proxy");
     }
-    await this.context.secrets.store("slack-user-token", userToken);
+
+    // Store the user token (xoxp-) for search.messages API
+    await this.context.secrets.store("slack-user-token", data.userToken);
 
     // Store workspace name for UI display
-    await this.context.globalState.update("slack-workspace-name", data.team?.name);
+    if (data.teamName) {
+      await this.context.globalState.update("slack-workspace-name", data.teamName);
+    }
 
     // Clear state nonce
     await this.context.globalState.update("slack-oauth-state", undefined);

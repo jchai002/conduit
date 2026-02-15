@@ -1,67 +1,44 @@
 /**
- * Cloudflare Worker — production OAuth redirect proxy for Conduit.
+ * Cloudflare Worker — production OAuth proxy for Conduit.
  *
- * Deploy this as a Cloudflare Worker to get a permanent HTTPS URL for
- * Slack OAuth redirects. It does one thing: receive the OAuth callback
- * from Slack and redirect the browser to the vscode:// URI handler.
+ * Handles the full Slack OAuth flow server-side so the client secret
+ * never leaves the server. The flow:
+ *
+ *   1. User clicks "Connect Slack" → browser opens Slack's authorize URL
+ *   2. Slack redirects to: https://<worker>/slack-callback?code=xyz&state=abc
+ *   3. Worker exchanges the code for a token using the client secret
+ *   4. Worker stores the token in KV (keyed by state, 5-min TTL)
+ *   5. Worker redirects browser to: vscode://jerrychaitea.conduit/slack-callback?state=abc
+ *   6. VS Code extension calls: https://<worker>/exchange?state=abc
+ *   7. Worker returns the token from KV and deletes it
+ *
+ * Secrets (set via `wrangler secret put`):
+ *   - SLACK_CLIENT_ID
+ *   - SLACK_CLIENT_SECRET
+ *
+ * KV namespace binding: OAUTH_KV
  *
  * Deployment:
- *   1. Install wrangler:  npm install -g wrangler
- *   2. Login:             wrangler login
- *   3. Deploy:            wrangler deploy oauth-proxy/cloudflare-worker.js --name conduit-oauth
- *   4. Your URL will be:  https://conduit-oauth.<your-account>.workers.dev
- *   5. Add redirect URL in Slack app: https://conduit-oauth.<your-account>.workers.dev/slack-callback
- *   6. Set businessContext.slack.oauthProxyUrl to the worker URL in VS Code settings
- *
- * Cost: $0 (Cloudflare Workers free tier = 100K requests/day)
+ *   wrangler deploy
  */
-
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
 
+    // ── Slack OAuth callback ──────────────────────────────────
+    // Slack redirects here after user authorizes. We exchange the
+    // code for a token server-side, stash it in KV, then redirect
+    // the browser to VS Code's URI handler (with state only).
     if (url.pathname === "/slack-callback") {
-      const code = url.searchParams.get("code");
-      const state = url.searchParams.get("state");
-      const error = url.searchParams.get("error");
+      return handleSlackCallback(url, env);
+    }
 
-      if (error) {
-        return new Response(
-          `<h2>Slack authorization failed</h2><p>Error: ${error}</p>`,
-          { headers: { "Content-Type": "text/html" } }
-        );
-      }
-
-      if (!code) {
-        return new Response("<h2>Missing authorization code</h2>", {
-          status: 400,
-          headers: { "Content-Type": "text/html" },
-        });
-      }
-
-      // Build vscode:// URI with OAuth params
-      const params = new URLSearchParams();
-      params.set("code", code);
-      if (state) params.set("state", state);
-      const vscodeUri = `vscode://jerrychaitea.conduit/slack-callback?${params}`;
-
-      // Return HTML that redirects to VS Code. We use meta refresh + JS
-      // because some browsers block vscode:// from HTTP 302 redirects.
-      return new Response(
-        `<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="refresh" content="0;url=${vscodeUri}">
-  <title>Redirecting to VS Code...</title>
-</head>
-<body>
-  <h2>Redirecting to VS Code...</h2>
-  <p>If VS Code doesn't open automatically, <a href="${vscodeUri}">click here</a>.</p>
-  <script>window.location.href = ${JSON.stringify(vscodeUri)};</script>
-</body>
-</html>`,
-        { headers: { "Content-Type": "text/html" } }
-      );
+    // ── Token exchange endpoint ───────────────────────────────
+    // VS Code extension calls this to retrieve the token that was
+    // stashed during the OAuth callback. One-time use: the KV
+    // entry is deleted after retrieval.
+    if (url.pathname === "/exchange") {
+      return handleExchange(url, env);
     }
 
     // Health check
@@ -74,3 +51,109 @@ export default {
     return new Response("Not found", { status: 404 });
   },
 };
+
+async function handleSlackCallback(url, env) {
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
+
+  if (error) {
+    return new Response(
+      `<h2>Slack authorization failed</h2><p>Error: ${error}</p>`,
+      { headers: { "Content-Type": "text/html" } }
+    );
+  }
+
+  if (!code || !state) {
+    return new Response("<h2>Missing authorization code or state</h2>", {
+      status: 400,
+      headers: { "Content-Type": "text/html" },
+    });
+  }
+
+  // Exchange the authorization code for tokens using the client secret.
+  // The redirect_uri must match what was used in the authorization URL.
+  const redirectUri = `${url.origin}/slack-callback`;
+  const tokenResponse = await fetch("https://slack.com/api/oauth.v2.access", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.SLACK_CLIENT_ID,
+      client_secret: env.SLACK_CLIENT_SECRET,
+      code,
+      redirect_uri: redirectUri,
+    }),
+  });
+
+  const tokenData = await tokenResponse.json();
+
+  if (!tokenData.ok) {
+    return new Response(
+      `<h2>Token exchange failed</h2><p>${tokenData.error || "Unknown error"}</p>`,
+      { status: 502, headers: { "Content-Type": "text/html" } }
+    );
+  }
+
+  // Extract the user token (xoxp-) for search.messages.
+  // The user token is in authed_user.access_token, NOT data.access_token
+  // (which is the bot token). search.messages only works with user tokens.
+  const userToken = tokenData.authed_user?.access_token;
+  if (!userToken) {
+    return new Response(
+      "<h2>No user token returned</h2><p>Ensure search:read is in user_scope.</p>",
+      { status: 502, headers: { "Content-Type": "text/html" } }
+    );
+  }
+
+  // Store token in KV, keyed by the state nonce. The extension will
+  // retrieve it via /exchange?state=... within 5 minutes.
+  const tokenPayload = JSON.stringify({
+    userToken,
+    teamName: tokenData.team?.name || "",
+  });
+  await env.OAUTH_KV.put(state, tokenPayload, { expirationTtl: 300 });
+
+  // Redirect browser to VS Code's URI handler. Only pass the state —
+  // the token stays server-side until the extension fetches it.
+  const vscodeUri = `vscode://jerrychaitea.conduit/slack-callback?state=${encodeURIComponent(state)}`;
+
+  return new Response(
+    `<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="refresh" content="0;url=${vscodeUri}">
+  <title>Redirecting to VS Code...</title>
+</head>
+<body>
+  <h2>Redirecting to VS Code...</h2>
+  <p>If VS Code doesn't open automatically, <a href="${vscodeUri}">click here</a>.</p>
+  <script>window.location.href = ${JSON.stringify(vscodeUri)};</script>
+</body>
+</html>`,
+    { headers: { "Content-Type": "text/html" } }
+  );
+}
+
+async function handleExchange(url, env) {
+  const state = url.searchParams.get("state");
+
+  if (!state) {
+    return Response.json({ ok: false, error: "missing_state" }, { status: 400 });
+  }
+
+  // Retrieve the token payload stashed during the OAuth callback
+  const tokenPayload = await env.OAUTH_KV.get(state);
+
+  if (!tokenPayload) {
+    return Response.json(
+      { ok: false, error: "token_not_found_or_expired" },
+      { status: 404 }
+    );
+  }
+
+  // Delete from KV — one-time use
+  await env.OAUTH_KV.delete(state);
+
+  const { userToken, teamName } = JSON.parse(tokenPayload);
+  return Response.json({ ok: true, userToken, teamName });
+}

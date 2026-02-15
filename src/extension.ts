@@ -94,7 +94,6 @@ async function handleSlackOAuthCallback(
   registry: ProviderRegistry
 ): Promise<void> {
   const params = new URLSearchParams(uri.query);
-  const code = params.get("code");
   const state = params.get("state");
   const error = params.get("error");
 
@@ -103,8 +102,8 @@ async function handleSlackOAuthCallback(
     return;
   }
 
-  if (!code || !state) {
-    vscode.window.showErrorMessage("Invalid Slack OAuth callback");
+  if (!state) {
+    vscode.window.showErrorMessage("Invalid Slack OAuth callback — missing state");
     return;
   }
 
@@ -115,7 +114,9 @@ async function handleSlackOAuthCallback(
     return;
   }
 
-  // Exchange code for token via Slack provider
+  // Fetch token from worker via Slack provider.
+  // The worker already exchanged the code server-side and stashed
+  // the token in KV — the provider just needs the state to retrieve it.
   const slackProvider = registry.getBusinessContext("slack") as SlackProvider;
   if (!slackProvider) {
     vscode.window.showErrorMessage("Slack provider not found");
@@ -123,7 +124,7 @@ async function handleSlackOAuthCallback(
   }
 
   try {
-    await slackProvider.handleOAuthCallback(code);
+    await slackProvider.handleOAuthCallback(state);
     vscode.window.showInformationMessage("Slack connected successfully!");
     // Notify webview of connection status change (if chat panel is open)
     ChatPanel.checkSlackConnection();
