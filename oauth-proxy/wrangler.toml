@@ -14,4 +14,4 @@ compatibility_date = "2024-09-01"
 
 [[kv_namespaces]]
 binding = "OAUTH_KV"
-id = "<PASTE_YOUR_KV_NAMESPACE_ID_HERE>"
+id = "14dd4ee5d43741958494024421ea5203"
