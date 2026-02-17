@@ -28,7 +28,7 @@ The extension gives AI coding tools direct access to business communication via 
 
 No single team can build adapters for every communication platform and every coding tool. But a community can.
 
-The architecture is built around two simple interfaces — `BusinessContextProvider` and `ConversationalAgent` — so that anyone can plug in support for their own stack. You use Teams instead of Slack? Write a Teams adapter and everyone benefits. You prefer Codex over Claude Code? Same thing.
+The architecture is built around two simple interfaces — `BusinessContextProvider` and `CodingAgent` — so that anyone can plug in support for their own stack. You use Teams instead of Slack? Write a Teams adapter and everyone benefits. You prefer Codex over Claude Code? Same thing.
 
 This is the kind of tool that gets better the more people contribute to it. Community contributions are welcome.
 
@@ -69,7 +69,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for a step-by-step guide. Adding a pro
 - [x] Slack context provider
 - [x] Claude Agent SDK integration (multi-turn, MCP-driven)
 - [x] MCP tools: `search_slack`, `get_slack_thread` (in-process, no separate server)
-- [x] ConversationalAgent abstraction (agent-agnostic chatPanel)
+- [x] CodingAgent abstraction (agent-agnostic chatPanel)
 - [x] Chat webview with tool call/result rendering and follow-ups
 - [ ] End-to-end testing with real Slack workspace
 - [ ] VS Code marketplace publishing
@@ -96,7 +96,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for a step-by-step guide. Adding a pro
 
 ## Multi-Agent Strategy
 
-Conduit wraps the Claude Agent SDK as its primary coding agent via the `ConversationalAgent` interface. Agent-specific coupling is contained within `providers/agents/claude-sdk/`. The chatPanel programs against the abstract interface, so adding a second agent requires zero changes to chatPanel or webview code — just a new adapter and registration.
+Conduit wraps the Claude Agent SDK as its primary coding agent via the `CodingAgent` interface. Agent-specific coupling is contained within `providers/agents/claude-sdk/`. The chatPanel programs against the abstract interface, so adding a second agent requires zero changes to chatPanel or webview code — just a new adapter and registration.
 
 ### Next target: OpenAI Codex SDK
 
@@ -119,7 +119,7 @@ Cursor, Windsurf, and Devin are proprietary/closed with no embeddable SDK. Aider
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Agent architecture | ConversationalAgent interface | All agents use the multi-turn streaming path with MCP tools |
+| Agent architecture | CodingAgent interface | All agents use the multi-turn streaming path with MCP tools |
 | MCP integration | In-process via `createSdkMcpServer()` | No separate stdio server needed; tools wrap ContextProvider directly |
 | Session management | SDK V1 `query()` with `resume` | SDK manages conversation history internally; supports multi-turn follow-ups |
 | Auth approach | CLI subprocess (user's subscription) | No per-token costs, users keep their existing AI subscriptions |

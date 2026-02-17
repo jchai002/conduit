@@ -14,7 +14,7 @@ The extension uses the conversational agent path for all queries. The configured
 
 ```
 User types in chat panel
-  → ChatPanel creates conversation via ConversationalAgent
+  → ChatPanel creates conversation via CodingAgent
   → Agent SDK streams responses
   → Agent calls MCP tools as needed (search_slack, get_slack_thread)
   → MCP tools call BusinessContextProvider methods
@@ -23,7 +23,7 @@ User types in chat panel
 ```
 
 Key components:
-- `ConversationalAgent` — abstract interface for any multi-turn agent
+- `CodingAgent` — abstract interface for any multi-turn agent
 - `ClaudeSDKAgent` — wraps the Claude Agent SDK, manages conversations
 - `createSdkMcpServer()` — in-process MCP server (no separate stdio process)
 - `mcpTools.ts` — provider-agnostic MCP tool definitions (tool names derived from provider ID)
@@ -51,12 +51,12 @@ interface BusinessContextProvider {
 
 Platform-specific logic (API calls, auth, query syntax) stays entirely inside `providers/business-context/<platform>/`. The rest of the codebase only sees `Message` and `Thread`.
 
-### ConversationalAgent Interface
+### CodingAgent Interface
 
 Abstracts which AI coding agent handles multi-turn conversations. Each agent wraps a specific SDK/CLI and translates its events into Conduit's message protocol.
 
 ```typescript
-interface ConversationalAgent {
+interface CodingAgent {
   id: string;              // "claude-code-cli", "codex"
   displayName: string;
   isAvailable(): Promise<boolean>;
@@ -99,7 +99,7 @@ interface Thread {
 
 `ChatPanel` is the bridge between the VS Code extension host and the webview UI. It:
 
-- Routes messages from the webview to the conversational agent
+- Routes messages from the webview to the coding agent
 - Manages conversations and buffers messages for session persistence
 - Handles permission requests (Ask / Auto-edit / YOLO modes)
 - Restores the most recent session on startup
@@ -136,8 +136,8 @@ Providers register on extension activation. The user picks which ones are active
 // extension.ts activate()
 registry.registerBusinessContext(new SlackProvider());
 registry.registerBusinessContext(new TeamsProvider());       // future
-registry.registerConversationalAgent(new ClaudeSDKAgent());
-registry.registerConversationalAgent(new CodexAgent());     // future
+registry.registerCodingAgent(new ClaudeSDKAgent());
+registry.registerCodingAgent(new CodexAgent());     // future
 ```
 
 Settings:
@@ -205,4 +205,4 @@ src/webview/
 
 The Claude Agent SDK spawns the Claude Code CLI as a subprocess internally — Conduit doesn't manage the process or touch API keys. Users leverage their existing Claude Pro/Max subscriptions (no per-token costs). The CLI provides full access to Claude Code's built-in codebase intelligence, file editing, git operations, and all agent capabilities.
 
-Adding a new agent (e.g. Codex) requires implementing `ConversationalAgent`, registering in `extension.ts`, and adding to `package.json` — zero changes to chatPanel or webview code.
+Adding a new agent (e.g. Codex) requires implementing `CodingAgent`, registering in `extension.ts`, and adding to `package.json` — zero changes to chatPanel or webview code.

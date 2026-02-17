@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ProviderRegistry } from "../providers/registry";
 import { BusinessContextProvider } from "../providers/businessContextProvider";
-import type { ConversationalAgent, AgentConversation, ConversationOptions, OnAgentMessage, AgentSetupInfo } from "../providers/conversationalAgent";
+import type { CodingAgent, AgentConversation, ConversationOptions, OnAgentMessage, AgentSetupInfo } from "../providers/codingAgent";
 
 const fakeProvider = (id: string): BusinessContextProvider => ({
   id,
@@ -12,7 +12,7 @@ const fakeProvider = (id: string): BusinessContextProvider => ({
   getThread: async () => null,
 });
 
-const fakeConversationalAgent = (id: string): ConversationalAgent => ({
+const fakeCodingAgent = (id: string): CodingAgent => ({
   id,
   displayName: `Agent ${id}`,
   isAvailable: async () => true,
@@ -53,11 +53,11 @@ describe("ProviderRegistry", () => {
     expect(registry.getBusinessContext("slack")).toBe(provider);
   });
 
-  it("registers and retrieves a conversational agent", () => {
+  it("registers and retrieves a coding agent", () => {
     const registry = new ProviderRegistry();
-    const agent = fakeConversationalAgent("claude-code-cli");
-    registry.registerConversationalAgent(agent);
-    expect(registry.getConversationalAgent("claude-code-cli")).toBe(agent);
+    const agent = fakeCodingAgent("claude-code-cli");
+    registry.registerCodingAgent(agent);
+    expect(registry.getCodingAgent("claude-code-cli")).toBe(agent);
   });
 
   it("returns undefined for unknown provider", () => {
@@ -67,7 +67,7 @@ describe("ProviderRegistry", () => {
 
   it("returns undefined for unknown agent", () => {
     const registry = new ProviderRegistry();
-    expect(registry.getConversationalAgent("nonexistent")).toBeUndefined();
+    expect(registry.getCodingAgent("nonexistent")).toBeUndefined();
   });
 
   it("lists all providers", () => {
@@ -79,10 +79,10 @@ describe("ProviderRegistry", () => {
     expect(all.map((p) => p.id)).toEqual(["slack", "mock"]);
   });
 
-  it("lists all conversational agents", () => {
+  it("lists all coding agents", () => {
     const registry = new ProviderRegistry();
-    registry.registerConversationalAgent(fakeConversationalAgent("claude-code-cli"));
-    const all = registry.getAllConversationalAgents();
+    registry.registerCodingAgent(fakeCodingAgent("claude-code-cli"));
+    const all = registry.getAllCodingAgents();
     expect(all).toHaveLength(1);
   });
 

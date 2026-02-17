@@ -1,9 +1,7 @@
 /**
- * ConversationalAgent — interface for multi-turn, streaming coding agents.
+ * CodingAgent — interface for multi-turn, streaming coding agents.
  *
- * This is the SDK-path counterpart to CodingAgent (the pipeline path).
- * While CodingAgent handles one-shot "send prompt, get result" interactions,
- * ConversationalAgent handles rich, multi-turn conversations with:
+ * CodingAgent handles rich, multi-turn conversations with:
  * - Live streaming of text, tool calls, and tool results
  * - Permission prompts (Allow/Deny before running commands)
  * - User questions (AskUserQuestion multi-choice prompts)
@@ -14,8 +12,8 @@
  * and translates its streaming events into Conduit's ExtensionToWebviewMessage
  * protocol so chatPanel.ts stays agent-agnostic.
  *
- * Implementations live in providers/agents/<name>/ alongside CodingAgent impls.
- * Adding a new conversational agent requires exactly 3 changes:
+ * Implementations live in providers/agents/<name>/.
+ * Adding a new coding agent requires exactly 3 changes:
  * 1. Create adapter in providers/agents/<name>/
  * 2. Register in extension.ts activate()
  * 3. Add to package.json config enum
@@ -34,7 +32,7 @@ export interface ConversationOptions {
 
 /**
  * Represents an active multi-turn conversation with an AI agent.
- * Created by ConversationalAgent.createConversation().
+ * Created by CodingAgent.createConversation().
  *
  * The conversation manages its own internal state (message history,
  * pending tool calls, etc.). chatPanel only interacts through this
@@ -87,7 +85,7 @@ export type OnAgentMessage = (msg: ExtensionToWebviewMessage) => void;
  * adapter creates an in-process MCP server; a future Codex adapter might
  * pass an MCP server URL. chatPanel doesn't need to know.
  */
-export interface ConversationalAgent {
+export interface CodingAgent {
   readonly id: string;
   readonly displayName: string;
 

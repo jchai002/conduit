@@ -22,7 +22,7 @@ import { execSync, spawn as nodeSpawn } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 import type { BusinessContextProvider } from "../../businessContextProvider";
-import type { ConversationalAgent, AgentConversation, AgentSetupInfo, ConversationOptions, OnAgentMessage } from "../../conversationalAgent";
+import type { CodingAgent, AgentConversation, AgentSetupInfo, ConversationOptions, OnAgentMessage } from "../../codingAgent";
 import { createSearchTool, createGetThreadTool, getToolNames } from "./mcpTools";
 import { buildSystemPrompt } from "./systemPrompt";
 import type { ExtensionToWebviewMessage } from "../../../chat/messages";
@@ -118,7 +118,7 @@ function findClaudeBinary(): string | undefined {
  * - MCP server + tools (reused as long as the provider hasn't changed)
  * - System prompt (reused as long as the workspace hasn't changed)
  */
-export class ClaudeSDKAgent implements ConversationalAgent {
+export class ClaudeSDKAgent implements CodingAgent {
   readonly id = "claude-code-cli";
   readonly displayName = "Claude Code CLI";
 
@@ -134,7 +134,7 @@ export class ClaudeSDKAgent implements ConversationalAgent {
   private cachedSystemPrompt: string | null = null;
   private cachedSystemPromptKey: string | null = null;
 
-  // ── ConversationalAgent interface methods ──────────────────
+  // ── CodingAgent interface methods ──────────────────────────
 
   getSetupInfo(): AgentSetupInfo {
     return {

@@ -1,40 +1,40 @@
 import { BusinessContextProvider } from "./businessContextProvider";
-import { ConversationalAgent } from "./conversationalAgent";
+import { CodingAgent } from "./codingAgent";
 
 /**
- * Central registry for business context providers and conversational agents.
+ * Central registry for business context providers and coding agents.
  * Extension registers available providers on activate; orchestration
  * looks them up by ID from user config.
  *
  * Two registries:
  * - Business context providers (Slack, Teams, etc.)
- * - Conversational agents (Claude, Codex, etc.) — multi-turn streaming with MCP tools
+ * - Coding agents (Claude, Codex, etc.) — multi-turn streaming with MCP tools
  */
 export class ProviderRegistry {
   private businessContextProviders = new Map<string, BusinessContextProvider>();
-  private conversationalAgents = new Map<string, ConversationalAgent>();
+  private codingAgents = new Map<string, CodingAgent>();
 
   registerBusinessContext(provider: BusinessContextProvider): void {
     this.businessContextProviders.set(provider.id, provider);
   }
 
-  registerConversationalAgent(agent: ConversationalAgent): void {
-    this.conversationalAgents.set(agent.id, agent);
+  registerCodingAgent(agent: CodingAgent): void {
+    this.codingAgents.set(agent.id, agent);
   }
 
   getBusinessContext(id: string): BusinessContextProvider | undefined {
     return this.businessContextProviders.get(id);
   }
 
-  getConversationalAgent(id: string): ConversationalAgent | undefined {
-    return this.conversationalAgents.get(id);
+  getCodingAgent(id: string): CodingAgent | undefined {
+    return this.codingAgents.get(id);
   }
 
   getAllBusinessContextProviders(): BusinessContextProvider[] {
     return Array.from(this.businessContextProviders.values());
   }
 
-  getAllConversationalAgents(): ConversationalAgent[] {
-    return Array.from(this.conversationalAgents.values());
+  getAllCodingAgents(): CodingAgent[] {
+    return Array.from(this.codingAgents.values());
   }
 }

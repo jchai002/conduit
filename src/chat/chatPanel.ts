@@ -12,14 +12,14 @@
  * - Manages agent conversations and buffers messages for session persistence
  *
  * All queries go through the conversational path: the configured agent
- * (registered as a ConversationalAgent) handles multi-turn streaming with
+ * (registered as a CodingAgent) handles multi-turn streaming with
  * MCP tools, permissions, and session persistence.
  */
 import * as vscode from "vscode";
 import * as crypto from "crypto";
 import { ProviderRegistry } from "../providers/registry";
 import { getWebviewHtml } from "../webview/template";
-import type { ConversationalAgent, AgentConversation } from "../providers/conversationalAgent";
+import type { CodingAgent, AgentConversation } from "../providers/codingAgent";
 import { SessionStore, StoredMessage } from "./sessionStore";
 import type { ExtensionToWebviewMessage, PermissionModeValue, WebviewToExtensionMessage } from "./messages";
 
@@ -46,7 +46,7 @@ export class ChatPanel {
   private static instance: ChatPanel | undefined;
   private panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
-  private conversationalAgent: ConversationalAgent | null = null;
+  private codingAgent: CodingAgent | null = null;
   private conversation: AgentConversation | null = null;
   private permissionMode: PermissionModeValue = "acceptEdits";
   private sessionStore: SessionStore;
@@ -220,7 +220,7 @@ export class ChatPanel {
     const config = this.getConfig();
     debug(`handleQuery config: ${JSON.stringify(config)}`);
 
-    const agent = this.registry.getConversationalAgent(config.codingAgent);
+    const agent = this.registry.getCodingAgent(config.codingAgent);
     if (!agent) {
       this.post({ type: "error", text: `Coding agent "${config.codingAgent}" not found. Check your businessContext.codingAgent setting.` });
       return;
@@ -232,7 +232,7 @@ export class ChatPanel {
   /** Starts a new conversational agent query. Creates a session, sets up the
    *  conversation object, and begins streaming. All streamed messages pass
    *  through bufferAndForward() which both shows them in the UI and saves them. */
-  private async handleConversationalQuery(text: string, agent: ConversationalAgent) {
+  private async handleConversationalQuery(text: string, agent: CodingAgent) {
     const config = this.getConfig();
     const provider = this.registry.getBusinessContext(config.contextProvider);
 
@@ -251,7 +251,7 @@ export class ChatPanel {
       return;
     }
 
-    this.conversationalAgent = agent;
+    this.codingAgent = agent;
 
     // Create a new session
     const tempId = crypto.randomUUID();
@@ -305,9 +305,9 @@ export class ChatPanel {
     try {
       await this.conversation.followUp(text);
     } catch (err: any) {
-      if (this.conversationalAgent?.isAuthError(err.message ?? "")) {
+      if (this.codingAgent?.isAuthError(err.message ?? "")) {
         debug("Auth error on follow-up — switching to setup screen");
-        this.post({ type: "setup-status", cliInstalled: true, cliAuthenticated: false, setupInfo: this.conversationalAgent.getSetupInfo() });
+        this.post({ type: "setup-status", cliInstalled: true, cliAuthenticated: false, setupInfo: this.codingAgent.getSetupInfo() });
       }
       this.post({ type: "error", text: err.message });
     }
@@ -326,9 +326,9 @@ export class ChatPanel {
         // Runtime auth fallback: The CLI sends "Not logged in · Please
         // run /login" as a text message (not an error), then exits with code 1.
         // Detect it here and switch to the setup screen immediately.
-        if (this.conversationalAgent?.isAuthError(msg.text)) {
+        if (this.codingAgent?.isAuthError(msg.text)) {
           debug("Auth error in agent text — switching to setup screen");
-          this.post({ type: "setup-status", cliInstalled: true, cliAuthenticated: false, setupInfo: this.conversationalAgent.getSetupInfo() });
+          this.post({ type: "setup-status", cliInstalled: true, cliAuthenticated: false, setupInfo: this.codingAgent.getSetupInfo() });
         }
         break;
       case "sdk-tool-call":
@@ -377,9 +377,9 @@ export class ChatPanel {
         // Runtime auth fallback: The CLI's auth error ("Not logged in")
         // arrives here as a streamed sdk-error, not as a thrown exception. Detect
         // it and switch to the setup screen so the user can re-authenticate.
-        if (this.conversationalAgent?.isAuthError(msg.text)) {
+        if (this.codingAgent?.isAuthError(msg.text)) {
           debug("Auth error in agent stream — switching to setup screen");
-          this.post({ type: "setup-status", cliInstalled: true, cliAuthenticated: false, setupInfo: this.conversationalAgent.getSetupInfo() });
+          this.post({ type: "setup-status", cliInstalled: true, cliAuthenticated: false, setupInfo: this.codingAgent.getSetupInfo() });
         }
         break;
     }
@@ -458,10 +458,10 @@ export class ChatPanel {
     const config = this.getConfig();
     const provider = this.registry.getBusinessContext(config.contextProvider);
     const folders = vscode.workspace.workspaceFolders;
-    const agent = this.conversationalAgent ?? this.registry.getConversationalAgent(config.codingAgent);
+    const agent = this.codingAgent ?? this.registry.getCodingAgent(config.codingAgent);
 
     if (agent && provider?.isConfigured() && folders && folders.length > 0) {
-      this.conversationalAgent = agent;
+      this.codingAgent = agent;
       this.conversation = agent.createConversationForResume(
         {
           provider,
@@ -495,20 +495,20 @@ export class ChatPanel {
   }
 
   /**
-   * Checks if the configured conversational agent's CLI is installed and
+   * Checks if the configured coding agent's CLI is installed and
    * authenticated, then sends the result to the webview. The webview decides
    * what to show based on the result (setup screen vs. normal chat).
    */
   private async checkSetupStatus(): Promise<void> {
     const config = this.getConfig();
-    const agent = this.registry.getConversationalAgent(config.codingAgent);
+    const agent = this.registry.getCodingAgent(config.codingAgent);
 
     if (!agent) {
       this.post({ type: "error", text: `Coding agent "${config.codingAgent}" not found. Check your businessContext.codingAgent setting.` });
       return;
     }
 
-    this.conversationalAgent = agent;
+    this.codingAgent = agent;
 
     // Reset cached state so "Check Again" picks up a freshly installed CLI.
     agent.resetCache();
@@ -528,7 +528,7 @@ export class ChatPanel {
   /** Opens a VS Code integrated terminal and runs the agent's setup command
    *  to trigger authentication (e.g. `claude` for Claude, `codex --auth` for Codex). */
   private openSetupTerminal(): void {
-    const agent = this.conversationalAgent;
+    const agent = this.codingAgent;
     const command = agent?.getSetupCommand() ?? "claude";
     const name = agent?.getSetupInfo().displayName ?? "Agent";
     const terminal = vscode.window.createTerminal({ name: `${name} Setup` });

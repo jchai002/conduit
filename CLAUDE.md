@@ -17,7 +17,7 @@ src/
 ├── providers/
 │   ├── types.ts                  # Message, Thread, SearchOptions (shared types)
 │   ├── businessContextProvider.ts # BusinessContextProvider interface
-│   ├── conversationalAgent.ts    # ConversationalAgent interface
+│   ├── codingAgent.ts            # CodingAgent interface
 │   ├── registry.ts               # ProviderRegistry
 │   ├── business-context/         # Communication platform adapters
 │   │   └── slack/                # Slack adapter
@@ -38,7 +38,7 @@ src/
 ## Architecture Rules
 
 - **All context sources must implement `BusinessContextProvider`** (src/providers/businessContextProvider.ts). Never import platform-specific code (Slack, Teams, etc.) outside of its own `providers/business-context/<platform>/` directory.
-- **All coding agents must implement `ConversationalAgent`** (src/providers/conversationalAgent.ts). Never import agent-specific code outside of its own `providers/agents/<tool>/` directory. `chatPanel.ts` programs against the abstract interface.
+- **All coding agents must implement `CodingAgent`** (src/providers/codingAgent.ts). Never import agent-specific code outside of its own `providers/agents/<tool>/` directory. `chatPanel.ts` programs against the abstract interface.
 - **New providers require exactly 3 changes:** (1) create adapter in `providers/business-context/<name>/` or `providers/agents/<name>/`, (2) register in `extension.ts` activate, (3) add to `package.json` config enum.
 
 ## Workflow Rules

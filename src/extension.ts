@@ -2,7 +2,7 @@
  * Extension entry point — VS Code calls activate() when the extension loads.
  *
  * This file wires everything together:
- * - Registers context providers (Slack, Mock) and conversational agents (Claude)
+ * - Registers context providers (Slack, Mock) and coding agents (Claude)
  * - Registers VS Code commands that appear in the command palette
  * - Opens the ChatPanel webview when requested
  *
@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
   // The user picks which ones to use via VS Code settings.
   registry.registerBusinessContext(new SlackProvider(context));
   registry.registerBusinessContext(new MockProvider());
-  registry.registerConversationalAgent(new ClaudeSDKAgent());
+  registry.registerCodingAgent(new ClaudeSDKAgent());
 
   // Register URI handler for OAuth callbacks
   context.subscriptions.push(

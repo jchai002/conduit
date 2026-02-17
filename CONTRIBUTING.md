@@ -20,7 +20,7 @@ src/
 ├── providers/
 │   ├── types.ts                  # Message, Thread, SearchOptions (shared)
 │   ├── businessContextProvider.ts # BusinessContextProvider interface
-│   ├── conversationalAgent.ts    # ConversationalAgent interface
+│   ├── codingAgent.ts            # CodingAgent interface
 │   ├── registry.ts               # Provider registry
 │   ├── business-context/         # Communication platform adapters
 │   │   └── slack/                # Slack implementation
@@ -110,12 +110,12 @@ That's it. MCP tools are generated automatically — tool names derive from the 
 
 ## Adding a Coding Agent (Codex, Copilot, etc.)
 
-Create `src/providers/agents/<tool>/<tool>Agent.ts` implementing `ConversationalAgent`:
+Create `src/providers/agents/<tool>/<tool>Agent.ts` implementing `CodingAgent`:
 
 ```typescript
-import type { ConversationalAgent, AgentConversation, ConversationOptions, OnAgentMessage } from "../../conversationalAgent";
+import type { CodingAgent, AgentConversation, ConversationOptions, OnAgentMessage } from "../../codingAgent";
 
-export class CodexAgent implements ConversationalAgent {
+export class CodexAgent implements CodingAgent {
   readonly id = "codex";
   readonly displayName = "OpenAI Codex";
 
