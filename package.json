@@ -60,15 +60,15 @@
         },
         "businessContext.codingAgent": {
           "type": "string",
-          "default": "claude-code",
+          "default": "claude-sdk",
           "enum": [
-            "claude-code",
             "claude-sdk",
+            "claude-code",
             "mock"
           ],
           "enumDescriptions": [
-            "Claude Code CLI (one-shot pipeline)",
             "Claude Code SDK (agentic, multi-turn with MCP tools)",
+            "Claude Code CLI (one-shot pipeline)",
             "Mock Agent (echoes prompt, no file changes)"
           ],
           "description": "Which AI coding tool to use for implementation.",
