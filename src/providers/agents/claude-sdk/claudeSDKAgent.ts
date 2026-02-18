@@ -650,13 +650,6 @@ class ClaudeConversationImpl implements AgentConversation {
                   text: block.text,
                   messageId: msg.uuid ?? "",
                 });
-              } else if (block.type === "compaction") {
-                // Compaction summary — the SDK compacted the conversation context
-                // and produced a summary. Show it as a distinct UI block.
-                const summary = typeof block.content === "string" ? block.content : "";
-                if (summary) {
-                  this.onMessage({ type: "sdk-compact-summary", text: summary });
-                }
               } else if (block.type === "tool_use") {
                 // Tools with custom UI or suppressed output — never emit as
                 // generic sdk-tool-call (they have their own messages).
@@ -746,11 +739,22 @@ class ClaudeConversationImpl implements AgentConversation {
 
           // "system" = Internal SDK events (compaction, status changes, init, etc.)
           case "system": {
-            if ((msg as any).subtype === "status") {
+            const subtype = (msg as any).subtype as string | undefined;
+            if (subtype === "status") {
               const status = (msg as any).status as string | null;
               if (status === "compacting") {
                 this.onMessage({ type: "status", text: "Compacting context..." });
               }
+            } else if (subtype === "compact_boundary") {
+              // Compaction finished — the SDK compacted the conversation and
+              // sent this boundary marker. Show a summary with token count.
+              const meta = (msg as any).compact_metadata as
+                { trigger?: string; pre_tokens?: number } | undefined;
+              const preTokens = meta?.pre_tokens;
+              const summary = preTokens
+                ? `Context compacted from ${preTokens.toLocaleString()} tokens.`
+                : "Context compacted.";
+              this.onMessage({ type: "sdk-compact-summary", text: summary });
             }
             break;
           }
