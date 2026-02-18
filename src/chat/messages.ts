@@ -11,6 +11,9 @@
  */
 
 import type { SessionMeta, StoredMessage } from "./sessionStore";
+import type { ModelOption } from "../providers/codingAgent";
+// Re-export so the webview can access it via @shared/messages
+export type { ModelOption };
 
 export type PermissionModeValue = "default" | "acceptEdits" | "bypassPermissions";
 
@@ -52,7 +55,9 @@ export type WebviewToExtensionMessage =
   | { type: "load-session-list" }
   | { type: "open-session"; sessionId: string }
   | { type: "new-conversation" }
-  | { type: "delete-session"; sessionId: string };
+  | { type: "delete-session"; sessionId: string }
+  // Model switching — user picked a model via /model slash command
+  | { type: "set-model"; modelId: string };
 
 /** Messages sent FROM the extension host TO the webview (data & events). */
 export type ExtensionToWebviewMessage =
@@ -88,4 +93,6 @@ export type ExtensionToWebviewMessage =
   // Session management
   | { type: "session-list"; sessions: SessionMeta[] }
   | { type: "session-opened"; meta: SessionMeta; messages: StoredMessage[] }
-  | { type: "session-cleared" };
+  | { type: "session-cleared" }
+  // Model status — sent on webview-ready and after model changes
+  | { type: "model-status"; currentModel: string | null; availableModels: ModelOption[] };

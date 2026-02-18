@@ -22,7 +22,7 @@ import { execSync, spawn as nodeSpawn } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 import type { BusinessContextProvider } from "../../businessContextProvider";
-import type { CodingAgent, AgentConversation, AgentSetupInfo, ConversationOptions, OnAgentMessage } from "../../codingAgent";
+import type { CodingAgent, AgentConversation, AgentSetupInfo, ConversationOptions, OnAgentMessage, ModelOption } from "../../codingAgent";
 import { createSearchTool, createGetThreadTool, getToolNames } from "./mcpTools";
 import { buildSystemPrompt } from "./systemPrompt";
 import type { ExtensionToWebviewMessage } from "../../../chat/messages";
@@ -151,6 +151,15 @@ export class ClaudeSDKAgent implements CodingAgent {
   resetCache(): void {
     this.binaryPathResolved = false;
     this.cachedBinaryPath = undefined;
+  }
+
+  /** Available Claude models for the /model slash command picker. */
+  getAvailableModels(): ModelOption[] {
+    return [
+      { id: "claude-sonnet-4-5-20250929", label: "Sonnet", description: "Sonnet 4.5 · Best for everyday tasks", isDefault: true },
+      { id: "claude-opus-4-20250514", label: "Opus", description: "Opus 4 · Most capable for complex work" },
+      { id: "claude-haiku-4-5-20251001", label: "Haiku", description: "Haiku 4.5 · Fastest for quick answers" },
+    ];
   }
 
   /** Checks if an error message looks like a Claude CLI auth failure.
@@ -429,6 +438,12 @@ class ClaudeConversationImpl implements AgentConversation {
     this.options = { ...this.options, permissionMode: mode };
   }
 
+  /** Updates the model so the next query/followUp uses it.
+   *  Called when the user picks a model via the /model slash command. */
+  setModel(modelId: string): void {
+    this.options = { ...this.options, model: modelId };
+  }
+
   /** Resolves a plan review prompt based on the user's chosen action.
    *  "accept" → allow (uses whatever permission mode the user has set globally),
    *  "continue" → deny (keep planning), custom text → deny with feedback. */
@@ -590,6 +605,8 @@ class ClaudeConversationImpl implements AgentConversation {
                 },
               }
             : {}),
+          // Model override — set via /model slash command. Omit to use CLI default.
+          ...(this.options.model ? { model: this.options.model } : {}),
           maxTurns: 20,
           // Binary path is cached on the agent — resolved once via execSync.
           ...(this.agent.getClaudeBinaryPath()

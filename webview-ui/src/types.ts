@@ -9,6 +9,7 @@ export type {
   WebviewToExtensionMessage,
   ExtensionToWebviewMessage,
   PermissionModeValue,
+  ModelOption,
 } from "@shared/messages";
 
 export type { SessionMeta, StoredMessage } from "@shared/sessionStore";

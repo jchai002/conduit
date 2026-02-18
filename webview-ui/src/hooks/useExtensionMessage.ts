@@ -125,6 +125,11 @@ export function useExtensionMessage() {
         case "session-cleared":
           dispatch({ type: "ext/session-cleared" });
           break;
+
+        // Model
+        case "model-status":
+          dispatch({ type: "ext/model-status", currentModel: msg.currentModel, availableModels: msg.availableModels });
+          break;
       }
     }
 

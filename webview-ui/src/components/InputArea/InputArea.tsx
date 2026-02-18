@@ -1,8 +1,9 @@
 /**
- * Input area — textarea, permission toggle, and send/stop button.
+ * Input area — textarea, permission toggle, send/stop button, and slash command menu.
  *
  * Layout (inspired by Claude Code):
  * ┌────────────────────────────────────┐
+ * │ [SlashCommandMenu popup]          │  ← appears above input when "/" is typed
  * │ [textarea]                         │
  * │─────────── subtle divider ─────────│
  * │ [permission toggle]    [send/stop] │
@@ -13,7 +14,7 @@
  * - Textarea auto-resizes up to 120px as user types
  * - Send = arrow-up icon, Stop = square icon (like Claude Code)
  * - Permission toggle on the left, send/stop right-aligned
- * - Left side is reserved for future buttons (attach, etc.)
+ * - Typing "/" or "/mo" etc. shows the slash command popup
  *
  * Sends "query" for first message, "followup" for subsequent messages.
  */
@@ -22,6 +23,7 @@ import { useExtensionState } from "../../context/ExtensionStateContext";
 import { usePostMessage } from "../../hooks/usePostMessage";
 import { PermissionToggle } from "../PermissionToggle";
 import { ContextUsage } from "../ContextUsage";
+import { SlashCommandMenu } from "./SlashCommandMenu";
 
 export function InputArea() {
   const { state, dispatch } = useExtensionState();
@@ -29,23 +31,31 @@ export function InputArea() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState("");
 
-  const send = useCallback(() => {
-    const trimmed = text.trim();
+  // Detect slash command prefix: "/" optionally followed by lowercase letters.
+  // Examples: "/" → shows all, "/mo" → filters to "model", "/compact" → filters to "compact"
+  const slashMatch = /^\/([a-z]*)$/.exec(text.trim());
+  const showSlashMenu = slashMatch !== null;
+  const slashFilter = slashMatch?.[1] ?? "";
+
+  /** Sends the current text as a query or followup message. */
+  const sendMessage = useCallback((messageText: string) => {
+    const trimmed = messageText.trim();
     if (!trimmed || state.busy) return;
 
-    // Add user message to the message list and mark as busy
     dispatch({ type: "ui/add-user-message", text: trimmed });
 
-    // Send to extension: "query" for first message, "followup" for subsequent
     const msgType = state.inConversation ? "followup" : "query";
     post({ type: msgType, text: trimmed } as any);
 
-    // Reset textarea
     setText("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-  }, [text, state.busy, state.inConversation, dispatch, post]);
+  }, [state.busy, state.inConversation, dispatch, post]);
+
+  const send = useCallback(() => {
+    sendMessage(text);
+  }, [text, sendMessage]);
 
   /** Sends cancel message to extension — the agent stops and the
    *  conversation is preserved so the user can resume with a follow-up. */
@@ -54,9 +64,16 @@ export function InputArea() {
   }, [post]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    // Suppress Enter when the slash menu is open — let the menu handle interaction
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      send();
+      if (!showSlashMenu) {
+        send();
+      }
+    }
+    // Escape closes the slash menu
+    if (e.key === "Escape" && showSlashMenu) {
+      setText("");
     }
   }
 
@@ -68,8 +85,35 @@ export function InputArea() {
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }
 
+  /** Called when user picks a model from the /model slash command picker. */
+  function handleSelectModel(modelId: string) {
+    post({ type: "set-model", modelId } as any);
+    setText("");
+  }
+
+  /** Called when user clicks an action command (compact, review, etc.). */
+  function handleSendCommand(commandText: string) {
+    sendMessage(commandText);
+  }
+
+  /** Called when the slash menu should close (click outside, etc.). */
+  function handleCloseSlashMenu() {
+    setText("");
+  }
+
   return (
     <div id="input-area">
+      {/* Slash command popup — appears above the textarea when "/" is typed */}
+      {showSlashMenu && (
+        <SlashCommandMenu
+          filter={slashFilter}
+          models={state.availableModels}
+          currentModel={state.currentModel}
+          onSelectModel={handleSelectModel}
+          onSendCommand={handleSendCommand}
+          onClose={handleCloseSlashMenu}
+        />
+      )}
       <textarea
         ref={textareaRef}
         id="input"

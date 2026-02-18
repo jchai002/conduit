@@ -429,6 +429,7 @@ body {
 
 /* Input area — textarea on top, toolbar below with divider (Claude Code style) */
 #input-area {
+  position: relative; /* Anchor for slash command popup */
   padding: 8px 16px 8px;
   border-top: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.06));
   display: flex;
@@ -1351,4 +1352,126 @@ body {
   background: transparent;
   border: 1px solid var(--vscode-panel-border, #3e4451);
   color: var(--vscode-foreground, #abb2bf);
+}
+
+/* ── Slash command menu ─────────────────────────────────────── */
+/* Popup that appears above the input area when user types "/" */
+
+.slash-command-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--vscode-dropdown-background, #252526);
+  border: 1px solid var(--vscode-panel-border, #333);
+  border-radius: 6px;
+  padding: 4px 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Command list items — each row is a button */
+.slash-command-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--vscode-foreground, #ccc);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.slash-command-item:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
+}
+
+.slash-command-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.slash-command-name {
+  color: var(--vscode-descriptionForeground, #888);
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.slash-command-label {
+  font-weight: 500;
+}
+
+.slash-command-hint {
+  color: var(--vscode-descriptionForeground, #888);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* Model picker view */
+.slash-command-back {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--vscode-panel-border, #333);
+  color: var(--vscode-descriptionForeground, #888);
+  cursor: pointer;
+  text-align: left;
+  font-size: 12px;
+}
+
+.slash-command-back:hover {
+  color: var(--vscode-foreground, #ccc);
+}
+
+.slash-model-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--vscode-foreground, #ccc);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.slash-model-item:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
+}
+
+.slash-model-item.active {
+  background: var(--vscode-list-activeSelectionBackground, rgba(255, 255, 255, 0.08));
+}
+
+.slash-model-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.slash-model-label {
+  font-weight: 500;
+}
+
+.slash-model-description {
+  color: var(--vscode-descriptionForeground, #888);
+  font-size: 12px;
+}
+
+.slash-model-check {
+  color: var(--vscode-terminal-ansiGreen, #89d185);
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-left: 8px;
 }

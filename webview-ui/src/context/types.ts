@@ -10,7 +10,7 @@
  * and todo lists. React components switch on `item.kind` to render
  * the right UI for each type.
  */
-import type { PermissionModeValue, SessionMeta } from "../types";
+import type { PermissionModeValue, SessionMeta, ModelOption } from "../types";
 
 /** A regular chat message (user input, Claude response, errors, etc.) */
 export interface ChatMessage {
@@ -124,6 +124,10 @@ export interface AppState {
   /** Tracks Slack connection status.
    *  null = not yet checked, object = check completed. */
   slackStatus: { connected: boolean; workspaceName?: string } | null;
+  /** Currently selected model override. null = agent default. */
+  currentModel: string | null;
+  /** Available models from the active coding agent (for /model picker). */
+  availableModels: ModelOption[];
   /** Context window usage — updated after each SDK turn completes.
    *  null = no data yet (first message hasn't finished). */
   contextUsage: {
@@ -147,6 +151,8 @@ export const initialState: AppState = {
   currentSessionTitle: "",
   setupStatus: null,
   slackStatus: null,
+  currentModel: null,
+  availableModels: [],
   contextUsage: null,
 };
 
@@ -186,6 +192,7 @@ export type Action =
       | { role: "error"; text: string }
     > }
   | { type: "ext/session-cleared" }
+  | { type: "ext/model-status"; currentModel: string | null; availableModels: ModelOption[] }
   // From webview UI interactions
   | { type: "ui/add-user-message"; text: string }
   | { type: "ui/set-busy"; busy: boolean }

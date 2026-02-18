@@ -21,6 +21,19 @@
 import type { BusinessContextProvider } from "./businessContextProvider";
 import type { ExtensionToWebviewMessage, PermissionModeValue } from "../chat/messages";
 
+/** A model option exposed by a coding agent for the slash command picker.
+ *  Each agent returns its own list — the webview doesn't hardcode model IDs. */
+export interface ModelOption {
+  /** Model identifier passed to the SDK (e.g. "claude-sonnet-4-5-20250929"). */
+  id: string;
+  /** Short display name (e.g. "Sonnet"). */
+  label: string;
+  /** One-line description (e.g. "Sonnet 4.5 · Best for everyday tasks"). */
+  description: string;
+  /** True for the agent's recommended default model. */
+  isDefault?: boolean;
+}
+
 /** Options for creating a conversation. Agent-agnostic — contains
  *  everything an agent needs to start, regardless of which SDK it wraps. */
 export interface ConversationOptions {
@@ -28,6 +41,8 @@ export interface ConversationOptions {
   workspaceName: string;
   workingDirectory: string;
   permissionMode?: PermissionModeValue;
+  /** Override the default model. Omit to use the agent's default. */
+  model?: string;
 }
 
 /**
@@ -53,6 +68,8 @@ export interface AgentConversation {
   handlePlanReviewResponse(requestId: string, action: string): void;
   /** Update permission mode mid-conversation. */
   setPermissionMode(mode: PermissionModeValue): void;
+  /** Update the model for subsequent queries. Optional — not all agents support it. */
+  setModel?(modelId: string): void;
   /** Whether a query is currently in flight. */
   readonly isRunning: boolean;
   /** The agent-assigned session ID. Null until the first response arrives.
@@ -106,6 +123,10 @@ export interface CodingAgent {
   /** Reset any cached binary/path state. Called when user clicks "Check Again"
    *  so the next isAvailable() check picks up a freshly installed CLI. */
   resetCache(): void;
+
+  /** Available models for the slash command picker.
+   *  Return empty array or omit if model switching is not supported. */
+  getAvailableModels?(): ModelOption[];
 
   /** Create a new conversation. Messages stream via the onMessage callback. */
   createConversation(

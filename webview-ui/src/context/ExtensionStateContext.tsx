@@ -307,6 +307,9 @@ export function appReducer(state: AppState, action: Action): AppState {
         messages: [],
       };
 
+    case "ext/model-status":
+      return { ...state, currentModel: action.currentModel, availableModels: action.availableModels };
+
     // ── UI actions ──
 
     case "ui/add-user-message":

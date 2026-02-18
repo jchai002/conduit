@@ -51,6 +51,8 @@ export class ChatPanel {
   private permissionMode: PermissionModeValue = "acceptEdits";
   private sessionStore: SessionStore;
   private activeSessionId: string | null = null;
+  /** The currently selected model override. null = use agent default. */
+  private currentModel: string | null = null;
   /** Accumulates messages during a conversation turn. Flushed to
    *  SessionStore when Claude finishes (sdk-done) so sessions persist. */
   private messageBuffer: StoredMessage[] = [];
@@ -135,6 +137,7 @@ export class ChatPanel {
         this.restoreMostRecentSession();
         this.checkSetupStatus();
         this.checkSlackConnection();
+        this.sendModelStatus();
         break;
       case "query":
         await this.handleQuery(msg.text);
@@ -213,6 +216,13 @@ export class ChatPanel {
         this.sessionStore.deleteSession(msg.sessionId);
         this.post({ type: "session-list", sessions: this.sessionStore.getIndex() });
         break;
+      case "set-model":
+        this.currentModel = msg.modelId;
+        // Update the active conversation so the next query uses the new model
+        this.conversation?.setModel?.(msg.modelId);
+        this.sendModelStatus();
+        debug(`Model switched to: ${msg.modelId}`);
+        break;
     }
   }
 
@@ -269,6 +279,7 @@ export class ChatPanel {
         workspaceName: folders[0].name,
         workingDirectory: folders[0].uri.fsPath,
         permissionMode: this.permissionMode,
+        model: this.currentModel ?? undefined,
       },
       (msg) => this.bufferAndForward(msg)
     );
@@ -468,6 +479,7 @@ export class ChatPanel {
           workspaceName: folders[0].name,
           workingDirectory: folders[0].uri.fsPath,
           permissionMode: this.permissionMode,
+          model: this.currentModel ?? undefined,
         },
         (msg) => this.bufferAndForward(msg),
         sessionId,
@@ -534,6 +546,15 @@ export class ChatPanel {
     const terminal = vscode.window.createTerminal({ name: `${name} Setup` });
     terminal.show();
     terminal.sendText(command);
+  }
+
+  /** Sends current model and available models to the webview.
+   *  Called on webview-ready and after model changes. */
+  private sendModelStatus(): void {
+    const config = this.getConfig();
+    const agent = this.codingAgent ?? this.registry.getCodingAgent(config.codingAgent);
+    const availableModels = agent?.getAvailableModels?.() ?? [];
+    this.post({ type: "model-status", currentModel: this.currentModel, availableModels });
   }
 
   /** Checks Slack connection status and sends it to the webview. */
