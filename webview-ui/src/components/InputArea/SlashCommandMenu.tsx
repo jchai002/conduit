@@ -30,9 +30,8 @@ interface SlashCommandDef {
 /** Static command registry — add new slash commands here.
  *  The menu filters this list based on what the user has typed. */
 const SLASH_COMMANDS: SlashCommandDef[] = [
-  { name: "model",   label: "Switch model...",     description: "Change the AI model",             type: "picker" },
-  { name: "compact", label: "Compact context",     description: "Compress conversation context",   type: "action" },
-  { name: "review",  label: "Review conversation", description: "Review the current conversation", type: "action" },
+  { name: "model",   label: "Switch model...",   description: "Change the AI model",           type: "picker" },
+  { name: "compact", label: "Compact context",   description: "Compress conversation context", type: "action" },
 ];
 
 interface SlashCommandMenuProps {

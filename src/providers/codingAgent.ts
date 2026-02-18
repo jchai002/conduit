@@ -125,8 +125,9 @@ export interface CodingAgent {
   resetCache(): void;
 
   /** Available models for the slash command picker.
+   *  Fetched from the agent's SDK/CLI. Implementations should cache the result.
    *  Return empty array or omit if model switching is not supported. */
-  getAvailableModels?(): ModelOption[];
+  getAvailableModels?(): Promise<ModelOption[]>;
 
   /** Create a new conversation. Messages stream via the onMessage callback. */
   createConversation(

@@ -134,6 +134,9 @@ export class ClaudeSDKAgent implements CodingAgent {
   private cachedSystemPrompt: string | null = null;
   private cachedSystemPromptKey: string | null = null;
 
+  /** Cached model list — fetched once via SDK supportedModels(), reused forever. */
+  private cachedModels: ModelOption[] | null = null;
+
   // ── CodingAgent interface methods ──────────────────────────
 
   getSetupInfo(): AgentSetupInfo {
@@ -153,13 +156,74 @@ export class ClaudeSDKAgent implements CodingAgent {
     this.cachedBinaryPath = undefined;
   }
 
-  /** Available Claude models for the /model slash command picker. */
-  getAvailableModels(): ModelOption[] {
-    return [
-      { id: "claude-sonnet-4-5-20250929", label: "Sonnet", description: "Sonnet 4.5 · Best for everyday tasks", isDefault: true },
-      { id: "claude-opus-4-20250514", label: "Opus", description: "Opus 4 · Most capable for complex work" },
-      { id: "claude-haiku-4-5-20251001", label: "Haiku", description: "Haiku 4.5 · Fastest for quick answers" },
-    ];
+  /** Fetches available models from the Claude CLI via the SDK's supportedModels().
+   *  Spawns a minimal query (maxTurns: 0) just to access the method, then caches
+   *  the result so subsequent calls are instant. Same spawn pattern as isAuthenticated().
+   *
+   *  Key subtlety: supportedModels() communicates with the CLI subprocess over
+   *  stdio. The subprocess only processes messages when we iterate the stream
+   *  (for await). So we must run the stream drain concurrently with supportedModels()
+   *  — otherwise the subprocess hasn't started processing and the call hangs/fails. */
+  async getAvailableModels(): Promise<ModelOption[]> {
+    if (this.cachedModels) return this.cachedModels;
+
+    try {
+      const binaryPath = this.getClaudeBinaryPath();
+      const loginPath = getLoginShellPath();
+      const abortController = new AbortController();
+
+      const q = query({
+        prompt: "test",
+        options: {
+          maxTurns: 0,
+          abortController,
+          ...(binaryPath ? { pathToClaudeCodeExecutable: binaryPath } : {}),
+          spawnClaudeCodeProcess: (spawnOpts: {
+            command: string;
+            args: string[];
+            cwd?: string;
+            env: Record<string, string | undefined>;
+            signal: AbortSignal;
+          }) => {
+            const env = { ...spawnOpts.env };
+            if (loginPath) {
+              env.PATH = loginPath;
+            }
+            const child = nodeSpawn(spawnOpts.command, spawnOpts.args, {
+              cwd: spawnOpts.cwd,
+              env,
+              stdio: ["pipe", "pipe", "pipe"],
+            });
+            spawnOpts.signal.addEventListener("abort", () => child.kill(), { once: true });
+            return child;
+          },
+        },
+      });
+
+      // Run supportedModels() concurrently with the stream drain.
+      // The stream drain drives the subprocess forward (processes stdio messages).
+      // Without it, supportedModels() would hang because the subprocess isn't
+      // processing its message queue. Same pattern as isAuthenticated() which
+      // iterates the stream to read the subprocess output.
+      const [sdkModels] = await Promise.all([
+        q.supportedModels(),
+        (async () => { for await (const _msg of q) { /* drain */ } })(),
+      ]);
+      abortController.abort();
+
+      console.log(`[Conduit] Fetched ${sdkModels.length} models from SDK`);
+
+      // Map SDK ModelInfo → Conduit ModelOption
+      this.cachedModels = sdkModels.map((m) => ({
+        id: m.value,
+        label: m.displayName,
+        description: m.description,
+      }));
+      return this.cachedModels;
+    } catch (err) {
+      console.error("[Conduit] Failed to fetch models from SDK:", err);
+      return [];
+    }
   }
 
   /** Checks if an error message looks like a Claude CLI auth failure.
@@ -639,7 +703,7 @@ class ClaudeConversationImpl implements AgentConversation {
         },
       });
 
-      console.log("[Conduit] SDK query() called, streaming messages...");
+      console.log(`[Conduit] SDK query() called, model=${this.options.model ?? "default"}, streaming messages...`);
 
       // Stream messages from Claude as they arrive.
       // Each `msg` is one step in the conversation — Claude thinking,

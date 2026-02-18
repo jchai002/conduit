@@ -550,10 +550,12 @@ export class ChatPanel {
 
   /** Sends current model and available models to the webview.
    *  Called on webview-ready and after model changes. */
-  private sendModelStatus(): void {
+  private async sendModelStatus(): Promise<void> {
     const config = this.getConfig();
     const agent = this.codingAgent ?? this.registry.getCodingAgent(config.codingAgent);
-    const availableModels = agent?.getAvailableModels?.() ?? [];
+    debug(`sendModelStatus: fetching models from agent=${agent?.id ?? "none"}`);
+    const availableModels = await agent?.getAvailableModels?.() ?? [];
+    debug(`sendModelStatus: ${availableModels.length} models, currentModel=${this.currentModel ?? "default"}`);
     this.post({ type: "model-status", currentModel: this.currentModel, availableModels });
   }
 
