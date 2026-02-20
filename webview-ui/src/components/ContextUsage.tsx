@@ -13,10 +13,13 @@ export function ContextUsage() {
 
   if (!state.contextUsage) return null;
 
-  const { contextWindow, inputTokens, outputTokens } = state.contextUsage;
+  const { contextWindow, inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens } = state.contextUsage;
   if (!contextWindow) return null;
 
-  const used = inputTokens + outputTokens;
+  // Context window usage = all input-side tokens (direct + cached) + output tokens.
+  // With prompt caching, inputTokens can be near-zero while cacheReadTokens holds
+  // the bulk of the context (e.g. 3 input vs 107,949 cacheRead).
+  const used = inputTokens + outputTokens + (cacheReadTokens ?? 0) + (cacheCreationTokens ?? 0);
   const rawPct = Math.min(100, (used / contextWindow) * 100);
 
   // Show 1 decimal place under 10% for granularity, round above 10%.

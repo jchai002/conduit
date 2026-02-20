@@ -803,10 +803,21 @@ class ClaudeConversationImpl implements AgentConversation {
             // sub-agents). Pick the model with the most input tokens — that's the
             // primary conversation model whose context window matters to the user.
             const modelUsages = msg.modelUsage ? Object.values(msg.modelUsage) : [];
+            // Log ALL model entries so we can see what the SDK reports
+            if (msg.modelUsage) {
+              for (const [model, usage] of Object.entries(msg.modelUsage)) {
+                console.log(`[Conduit] modelUsage[${model}]: input=${(usage as any).inputTokens} output=${(usage as any).outputTokens} cacheRead=${(usage as any).cacheReadInputTokens} cacheCreate=${(usage as any).cacheCreationInputTokens} window=${(usage as any).contextWindow}`);
+              }
+            }
+            // Compare by TOTAL input tokens (including cache hits/misses).
+            // With prompt caching, inputTokens can be near-zero while cacheRead
+            // holds the bulk. All three count toward the context window limit.
+            const totalInput = (u: any) =>
+              (u.inputTokens ?? 0) + (u.cacheReadInputTokens ?? 0) + (u.cacheCreationInputTokens ?? 0);
             const mu = modelUsages.length > 1
-              ? modelUsages.reduce((best, cur) => cur.inputTokens > best.inputTokens ? cur : best)
+              ? modelUsages.reduce((best, cur) => totalInput(cur) > totalInput(best) ? cur : best)
               : modelUsages[0];
-            console.log(`[Conduit] result modelUsage: ${modelUsages.length} models, primary=${mu?.inputTokens ?? 0} input / ${mu?.contextWindow ?? 0} window`);
+            console.log(`[Conduit] picked model: totalInput=${mu ? totalInput(mu) : 0} output=${mu?.outputTokens ?? 0} window=${mu?.contextWindow ?? 0}`);
 
             const successResult = msg.subtype === "success" ? msg.result : undefined;
             this.onMessage({
