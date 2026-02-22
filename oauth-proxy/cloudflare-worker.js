@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker — production OAuth proxy for Conduit.
+ * Cloudflare Worker — production OAuth proxy and telemetry relay for Conduit.
  *
  * Handles the full Slack OAuth flow server-side so the client secret
  * never leaves the server. The flow:
@@ -12,6 +12,11 @@
  *   6. VS Code extension calls: https://<worker>/exchange?state=abc
  *   7. Worker returns the token from KV and deletes it
  *
+ * Rate limiting:
+ *   - OAuth endpoints: 20 requests/day per IP address
+ *   - Telemetry upload: 10 requests/day per device ID
+ *   Uses KV with 24-hour TTL for counters (auto-cleanup).
+ *
  * Secrets (set via `wrangler secret put`):
  *   - SLACK_CLIENT_ID
  *   - SLACK_CLIENT_SECRET
@@ -21,6 +26,25 @@
  * Deployment:
  *   wrangler deploy
  */
+
+/** Daily rate limits per identifier. */
+const OAUTH_RATE_LIMIT = 20;   // per IP
+const UPLOAD_RATE_LIMIT = 10;  // per device ID
+
+/**
+ * Checks and increments a rate-limit counter in KV.
+ * Returns true if the request is allowed, false if limit exceeded.
+ * Keys auto-expire after 24 hours so no cleanup is needed.
+ */
+async function checkRateLimit(kv, prefix, identifier, limit) {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const key = `ratelimit:${prefix}:${identifier}:${today}`;
+  const count = parseInt(await kv.get(key) || "0");
+  if (count >= limit) return false;
+  await kv.put(key, String(count + 1), { expirationTtl: 86400 });
+  return true;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -30,6 +54,10 @@ export default {
     // code for a token server-side, stash it in KV, then redirect
     // the browser to VS Code's URI handler (with state only).
     if (url.pathname === "/slack-callback") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      if (!await checkRateLimit(env.OAUTH_KV, "oauth", ip, OAUTH_RATE_LIMIT)) {
+        return new Response("Rate limit exceeded. Try again tomorrow.", { status: 429 });
+      }
       return handleSlackCallback(url, env);
     }
 
@@ -38,6 +66,10 @@ export default {
     // stashed during the OAuth callback. One-time use: the KV
     // entry is deleted after retrieval.
     if (url.pathname === "/exchange") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      if (!await checkRateLimit(env.OAUTH_KV, "oauth", ip, OAUTH_RATE_LIMIT)) {
+        return new Response("Rate limit exceeded. Try again tomorrow.", { status: 429 });
+      }
       return handleExchange(url, env);
     }
 
