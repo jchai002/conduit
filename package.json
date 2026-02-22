@@ -23,6 +23,14 @@
         "command": "conduit.openChat",
         "title": "Conduit: Open Chat",
         "icon": "media/conduit-icon.svg"
+      },
+      {
+        "command": "conduit.viewTelemetryData",
+        "title": "Conduit: View Collected Data"
+      },
+      {
+        "command": "conduit.deleteTelemetryData",
+        "title": "Conduit: Delete Collected Data"
       }
     ],
     "menus": {
@@ -79,6 +87,18 @@
           "default": "",
           "description": "HTTPS proxy URL for Slack OAuth (e.g. https://conduit-oauth.your-account.workers.dev). The proxy handles token exchange server-side. Leave blank for the default Conduit proxy.",
           "order": 12
+        },
+        "businessContext.telemetry.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable anonymous data collection (usage patterns + AI responses). Never collects your Slack messages or what you type — only Claude's outputs and interaction metadata. Data is stored locally at ~/.conduit/telemetry/sessions.jsonl.",
+          "order": 20
+        },
+        "businessContext.telemetry.syncEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Periodically upload collected telemetry to Conduit's servers for training better context search. Requires telemetry.enabled. Data is anonymous (device ID only, no email or identity).",
+          "order": 21
         },
         "businessContext.maxSearchResults": {
           "type": "number",

@@ -17,6 +17,9 @@ import { SlackProvider } from "./providers/business-context/slack/slackProvider"
 import { MockProvider } from "./providers/business-context/mock/mockProvider";
 import { ClaudeSDKAgent } from "./providers/agents/claude-sdk/claudeSDKAgent";
 import { ChatPanel } from "./chat/chatPanel";
+import { DataCollector } from "./telemetry/dataCollector";
+import { ConsentManager } from "./telemetry/consentManager";
+import { SyncService } from "./telemetry/syncService";
 
 /** Central registry for all providers and agents. Singleton for the extension lifetime. */
 const registry = new ProviderRegistry();
@@ -30,6 +33,28 @@ export function activate(context: vscode.ExtensionContext) {
   registry.registerBusinessContext(new SlackProvider(context));
   registry.registerBusinessContext(new MockProvider());
   registry.registerCodingAgent(new ClaudeSDKAgent());
+
+  // Telemetry — local data collection and consent management.
+  // DataCollector appends events to ~/.conduit/telemetry/sessions.jsonl.
+  // ConsentManager shows a one-time opt-in notification after the first conversation.
+  const consentManager = new ConsentManager(context);
+  const dataCollector = new DataCollector(consentManager.isEnabled());
+
+  // S3 sync service — periodically uploads telemetry data to our backend.
+  // Starts a background timer (every 6 hours) and syncs on deactivate.
+  const syncService = new SyncService();
+  syncService.start();
+  activeSyncService = syncService;
+
+  // Re-check enabled state when settings change at runtime
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("businessContext.telemetry") ||
+          e.affectsConfiguration("telemetry.telemetryLevel")) {
+        dataCollector.updateSettings(consentManager.isEnabled());
+      }
+    })
+  );
 
   // Register URI handler for OAuth callbacks
   context.subscriptions.push(
@@ -53,12 +78,45 @@ export function activate(context: vscode.ExtensionContext) {
   // Register command to open chat panel as editor tab
   context.subscriptions.push(
     vscode.commands.registerCommand("conduit.openChat", () => {
-      ChatPanel.open(context, registry, getConfig);
+      ChatPanel.open(context, registry, getConfig, dataCollector, consentManager);
+    })
+  );
+
+  // Transparency commands — let users inspect and delete collected telemetry data
+  context.subscriptions.push(
+    vscode.commands.registerCommand("conduit.viewTelemetryData", async () => {
+      const filePath = dataCollector.getDataFilePath();
+      try {
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+        await vscode.window.showTextDocument(doc);
+      } catch {
+        vscode.window.showInformationMessage("No telemetry data collected yet.");
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("conduit.deleteTelemetryData", async () => {
+      const confirm = await vscode.window.showWarningMessage(
+        "Delete all collected telemetry data? This cannot be undone.",
+        { modal: true },
+        "Delete"
+      );
+      if (confirm === "Delete") {
+        dataCollector.deleteData();
+        vscode.window.showInformationMessage("Telemetry data deleted.");
+      }
     })
   );
 }
 
-export function deactivate() {}
+/** Module-level reference so deactivate() can trigger a final sync. */
+let activeSyncService: SyncService | undefined;
+
+export function deactivate() {
+  // Best-effort final sync — VS Code gives ~5 seconds before killing.
+  activeSyncService?.syncOnDeactivate();
+}
 
 // ─── OAuth Callback Handler ────────────────────────────────
 

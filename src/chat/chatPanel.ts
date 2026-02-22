@@ -22,6 +22,8 @@ import { getWebviewHtml } from "../webview/template";
 import type { CodingAgent, AgentConversation } from "../providers/codingAgent";
 import { SessionStore, StoredMessage } from "./sessionStore";
 import type { ExtensionToWebviewMessage, PermissionModeValue, WebviewToExtensionMessage } from "./messages";
+import type { DataCollector } from "../telemetry/dataCollector";
+import type { ConsentManager } from "../telemetry/consentManager";
 
 export interface ChatPanelConfig {
   contextProvider: string;
@@ -62,7 +64,9 @@ export class ChatPanel {
     private extensionUri: vscode.Uri,
     private context: vscode.ExtensionContext,
     private registry: ProviderRegistry,
-    private getConfig: () => ChatPanelConfig
+    private getConfig: () => ChatPanelConfig,
+    private dataCollector: DataCollector,
+    private consentManager: ConsentManager,
   ) {
     this.panel = panel;
     this.sessionStore = new SessionStore(context.workspaceState);
@@ -83,7 +87,9 @@ export class ChatPanel {
   static open(
     context: vscode.ExtensionContext,
     registry: ProviderRegistry,
-    getConfig: () => ChatPanelConfig
+    getConfig: () => ChatPanelConfig,
+    dataCollector: DataCollector,
+    consentManager: ConsentManager,
   ) {
     if (ChatPanel.instance) {
       ChatPanel.instance.panel.reveal();
@@ -103,7 +109,7 @@ export class ChatPanel {
     );
 
     panel.iconPath = vscode.Uri.joinPath(extensionUri, "media", "conduit-icon.svg");
-    ChatPanel.instance = new ChatPanel(panel, extensionUri, context, registry, getConfig);
+    ChatPanel.instance = new ChatPanel(panel, extensionUri, context, registry, getConfig, dataCollector, consentManager);
   }
 
   private dispose() {
@@ -269,6 +275,14 @@ export class ChatPanel {
     this.activeSessionId = tempId;
     this.messageBuffer = [{ role: "user", text, timestamp: Date.now() }];
 
+    // Start a telemetry session — records metadata about this conversation.
+    // The collector is a no-op if telemetry is disabled.
+    this.dataCollector.startSession({
+      model: this.currentModel ?? "default",
+      permissionMode: this.permissionMode,
+    });
+    this.dataCollector.recordUserQuery(text.length);
+
     this.post({ type: "status", text: "Thinking..." });
 
     debug(`Conversational query starting: agent=${agent.displayName} provider=${config.contextProvider} workspace=${folders[0].name} permissionMode=${this.permissionMode}`);
@@ -310,6 +324,7 @@ export class ChatPanel {
     }
 
     this.messageBuffer.push({ role: "user", text, timestamp: Date.now() });
+    this.dataCollector.recordUserFollowup(text.length);
 
     this.post({ type: "status", text: "Thinking..." });
 
@@ -334,6 +349,7 @@ export class ChatPanel {
     switch (msg.type) {
       case "sdk-text":
         this.messageBuffer.push({ role: "assistant", text: msg.text, timestamp: Date.now() });
+        this.dataCollector.recordAssistantText(msg.text.length, msg.text);
         // Runtime auth fallback: The CLI sends "Not logged in · Please
         // run /login" as a text message (not an error), then exits with code 1.
         // Detect it here and switch to the setup screen immediately.
@@ -347,6 +363,7 @@ export class ChatPanel {
           role: "tool-call", text: msg.input.slice(0, 2000), toolName: msg.toolName,
           toolCallId: msg.toolCallId, timestamp: Date.now(),
         });
+        this.dataCollector.recordToolCall(msg.toolName, msg.input.length, msg.input);
         break;
       case "user-question":
         // Persist AskUserQuestion as a tool-call so it shows in session history
@@ -367,9 +384,24 @@ export class ChatPanel {
           role: "tool-result", text: msg.result.slice(0, 200),
           toolCallId: msg.toolCallId, timestamp: Date.now(),
         });
+        this.dataCollector.recordToolResult(msg.toolCallId, msg.result.length, 0);
         break;
       case "sdk-done":
         this.flushMessageBuffer();
+        // End the telemetry session with outcome and token usage
+        this.dataCollector.endSession({
+          outcome: "success",
+          costUsd: msg.cost,
+          durationMs: msg.duration,
+          contextWindow: msg.contextWindow,
+          inputTokens: msg.inputTokens,
+          outputTokens: msg.outputTokens,
+          cacheReadTokens: msg.cacheReadTokens,
+          cacheCreationTokens: msg.cacheCreationTokens,
+        });
+        // Show the consent notification after the first successful conversation.
+        // Non-blocking — runs in the background, doesn't delay the UI.
+        this.consentManager.maybeShowPrompt();
         // Update session ID from agent if available
         if (this.conversation?.sessionId && this.activeSessionId) {
           const agentSessionId = this.conversation.sessionId;
@@ -385,6 +417,7 @@ export class ChatPanel {
       case "sdk-error":
         this.messageBuffer.push({ role: "error", text: msg.text, timestamp: Date.now() });
         this.flushMessageBuffer();
+        this.dataCollector.endSession({ outcome: "error" });
         // Runtime auth fallback: The CLI's auth error ("Not logged in")
         // arrives here as a streamed sdk-error, not as a thrown exception. Detect
         // it and switch to the setup screen so the user can re-authenticate.
