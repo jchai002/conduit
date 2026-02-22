@@ -24,6 +24,11 @@ import * as path from "path";
 import * as os from "os";
 import * as crypto from "crypto";
 
+/** Max data file size (1 GB). When exceeded, the file is deleted and
+ *  logging starts fresh. Unsynced data from the tail end may be lost,
+ *  but the window is small (at most one sync interval ≈ 6 hours). */
+const MAX_DATA_FILE_BYTES = 1_073_741_824;
+
 /** Outcome of a completed session — passed to endSession(). */
 export interface SessionOutcome {
   outcome: "success" | "error" | "cancelled";
@@ -83,11 +88,14 @@ export class DataCollector {
 
   /** Full path to the JSONL data file. */
   private dataFilePath: string;
+  /** Full path to the sync state file — reset when data file is wiped. */
+  private syncStatePath: string;
 
   constructor() {
     // Resolve paths
     const dataDir = path.join(os.homedir(), ".conduit", "telemetry");
     this.dataFilePath = path.join(dataDir, "sessions.jsonl");
+    this.syncStatePath = path.join(dataDir, "sync-state.json");
 
     // Ensure directory exists
     fs.mkdirSync(dataDir, { recursive: true });
@@ -237,12 +245,19 @@ export class DataCollector {
     return this.dataFilePath;
   }
 
-  /** Delete all collected data and reset the data file. */
+  /** Delete all collected data and reset the data file.
+   *  Also resets the sync byte offset so the next sync doesn't
+   *  point past the end of a new (smaller) file. */
   deleteData(): void {
     try {
       fs.unlinkSync(this.dataFilePath);
     } catch {
       // File may not exist — that's fine
+    }
+    try {
+      fs.writeFileSync(this.syncStatePath, JSON.stringify({ lastSyncByteOffset: 0 }), "utf-8");
+    } catch {
+      // Best effort — sync will self-correct via the offset > size check
     }
   }
 
@@ -268,9 +283,23 @@ export class DataCollector {
   }
 
   /** Append a single JSONL line to the data file. Uses appendFileSync for
-   *  crash-safety — each line is atomic on POSIX (single write < PIPE_BUF). */
+   *  crash-safety — each line is atomic on POSIX (single write < PIPE_BUF).
+   *  If the file exceeds the size cap, it's deleted and sync state is reset
+   *  so the next sync starts fresh instead of pointing past the new file. */
   private append(record: Record<string, unknown>): void {
     try {
+      // Check size cap before writing — delete and start fresh if exceeded.
+      try {
+        const stat = fs.statSync(this.dataFilePath);
+        if (stat.size >= MAX_DATA_FILE_BYTES) {
+          fs.unlinkSync(this.dataFilePath);
+          fs.writeFileSync(this.syncStatePath, JSON.stringify({ lastSyncByteOffset: 0 }), "utf-8");
+          console.log("[Conduit] Telemetry data file exceeded 1 GB — reset");
+        }
+      } catch {
+        // File doesn't exist yet — that's fine, appendFileSync will create it.
+      }
+
       fs.appendFileSync(this.dataFilePath, JSON.stringify(record) + "\n", "utf-8");
     } catch (err) {
       // Don't let telemetry failures crash the extension.

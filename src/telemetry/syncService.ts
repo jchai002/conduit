@@ -107,8 +107,13 @@ export class SyncService {
     const stat = fs.statSync(this.dataFilePath);
     if (stat.size === 0) return;
 
-    // Load sync state — start from the last synced byte offset
+    // Load sync state — start from the last synced byte offset.
+    // If the offset is past the file size, the file was reset (size cap
+    // or manual deletion). Start from the beginning of the new file.
     const syncState = this.loadSyncState();
+    if (syncState.lastSyncByteOffset > stat.size) {
+      syncState.lastSyncByteOffset = 0;
+    }
     if (syncState.lastSyncByteOffset >= stat.size) return; // nothing new
 
     // Read new data from the byte offset to EOF
