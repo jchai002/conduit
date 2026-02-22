@@ -151,6 +151,11 @@ export function appReducer(state: AppState, action: Action): AppState {
         ...state,
         showWelcome: false,
         statusText: "", // Clear "Compacting context..." — compaction is done
+        // Reset context usage — old token counts are meaningless after compaction.
+        // The indicator will update with accurate post-compaction values on the
+        // next sdk-done (when the SDK reports fresh modelUsage).
+        contextUsage: { contextWindow: 0, inputTokens: 0, outputTokens: 0,
+          cacheReadTokens: 0, cacheCreationTokens: 0 },
         messages: [...state.messages, {
           id: uid(), kind: "compact-summary" as const, text: action.text,
         }],
