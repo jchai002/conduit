@@ -75,6 +75,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for a step-by-step guide. Adding a pro
 - [ ] VS Code marketplace publishing
 
 ### Phase 2: Multi-Platform
+- [ ] Multiple concurrent chat sessions (each spawns its own CLI subprocess)
 - [ ] Microsoft Teams context provider (Graph API)
 - [ ] Jira context provider (Atlassian REST API)
 - [ ] Outlook/email context provider (Graph API)
