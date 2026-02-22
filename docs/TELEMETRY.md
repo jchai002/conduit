@@ -1,10 +1,10 @@
 # What Conduit Collects
 
-Conduit can optionally collect anonymous usage data to improve context search quality. **Collection is off by default** and requires your explicit opt-in.
+Conduit logs anonymous usage data locally to improve context search quality. If you enable sharing, this data is periodically uploaded to help train better models.
 
 ## What's Included
 
-When you enable telemetry (`businessContext.telemetry.enabled`), Conduit records:
+Conduit records the following locally:
 
 - **AI responses** — Claude's text output (summaries, analysis, implementation plans)
 - **Tool call metadata** — which tools Claude used and what it searched for (e.g. `search_slack` with query `"rate limiting from:sarah"`)
@@ -46,12 +46,12 @@ You can inspect this file at any time with **Conduit: View Collected Data** from
 
 | Setting | What it does |
 |---|---|
-| `businessContext.telemetry.enabled` | Toggle all data collection on/off |
-| `businessContext.telemetry.syncEnabled` | Toggle uploading data to Conduit's servers |
+| `businessContext.telemetry.enabled` | Toggle local data logging on/off (re-enable after declining) |
+| `businessContext.telemetry.syncEnabled` | Toggle uploading local data to Conduit's servers |
 
-- **Disable anytime** — unchecking the setting stops collection immediately
+- **"No thanks" on consent prompt** — stops local logging (re-enable via the setting above)
 - **Delete your data** — run **Conduit: Delete Collected Data** from the command palette
-- **VS Code telemetry** — if you've set `telemetry.telemetryLevel` to "off", Conduit respects that and won't collect anything regardless of our setting
+- **VS Code telemetry** — if you've set `telemetry.telemetryLevel` to "off", Conduit respects that and won't upload anything regardless of our setting
 
 ## Why We Collect This
 

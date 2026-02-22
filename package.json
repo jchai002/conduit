@@ -91,7 +91,7 @@
         "businessContext.telemetry.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Enable anonymous data collection (usage patterns + AI responses). Never collects your Slack messages or what you type — only Claude's outputs and interaction metadata. Data is stored locally at ~/.conduit/telemetry/sessions.jsonl.",
+          "description": "Enable local logging of anonymous usage data (AI responses + interaction metadata). Turn this on to re-enable logging if you previously declined the consent prompt. Data is stored at ~/.conduit/telemetry/sessions.jsonl.",
           "order": 20
         },
         "businessContext.telemetry.syncEnabled": {

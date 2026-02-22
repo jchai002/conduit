@@ -35,26 +35,35 @@ export function activate(context: vscode.ExtensionContext) {
   registry.registerCodingAgent(new ClaudeSDKAgent());
 
   // Telemetry — local data collection and consent management.
-  // DataCollector appends events to ~/.conduit/telemetry/sessions.jsonl.
-  // ConsentManager shows a one-time opt-in notification after the first conversation.
-  const consentManager = new ConsentManager(context);
-  const dataCollector = new DataCollector(consentManager.isEnabled());
+  // DataCollector logs locally by default. If the user previously clicked
+  // "No thanks", disable logging on startup (they can re-enable via settings).
+  const dataCollector = new DataCollector();
+  if (context.globalState.get<boolean>("conduit.telemetry.dismissed")) {
+    dataCollector.disable();
+  }
+  const consentManager = new ConsentManager(context, dataCollector);
+
+  // If the user manually flips telemetry.enabled to true in settings after
+  // previously declining, re-enable local logging and clear the dismissed state
+  // so they don't need to reinstall. This is the "power user escape hatch."
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("businessContext.telemetry.enabled")) {
+        const enabled = vscode.workspace.getConfiguration("businessContext")
+          .get<boolean>("telemetry.enabled", false);
+        if (enabled) {
+          dataCollector.enable();
+          context.globalState.update("conduit.telemetry.dismissed", undefined);
+        }
+      }
+    })
+  );
 
   // S3 sync service — periodically uploads telemetry data to our backend.
   // Starts a background timer (every 6 hours) and syncs on deactivate.
   const syncService = new SyncService();
   syncService.start();
   activeSyncService = syncService;
-
-  // Re-check enabled state when settings change at runtime
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("businessContext.telemetry") ||
-          e.affectsConfiguration("telemetry.telemetryLevel")) {
-        dataCollector.updateSettings(consentManager.isEnabled());
-      }
-    })
-  );
 
   // Register URI handler for OAuth callbacks
   context.subscriptions.push(

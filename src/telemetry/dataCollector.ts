@@ -13,8 +13,9 @@
  * user followup text (only length). We never store what the user typed or
  * what Slack returned — only what Claude produced and interaction metadata.
  *
- * The collector is a no-op when disabled — zero overhead on the hot path.
- * It also respects VS Code's global telemetry setting (telemetry.telemetryLevel).
+ * Local logging is on by default — this is application logging on the user's
+ * own machine. If the user explicitly declines the consent prompt ("No thanks"),
+ * logging stops permanently. Consent is only needed for S3 upload (see SyncService).
  *
  * Schema versioned with a `v` field so we can evolve without breaking old files.
  */
@@ -55,15 +56,17 @@ interface BaseRecord {
  * DataCollector — append-only JSONL telemetry writer.
  *
  * Lifecycle:
- * 1. Instantiate with `enabled` flag from settings
+ * 1. Instantiate (logging enabled by default)
  * 2. Call startSession() when a new conversation begins
  * 3. Call recordX() methods from the SDK streaming loop
  * 4. Call endSession() when the conversation finishes
  *
- * If disabled, all methods are instant no-ops.
+ * If the user declines consent, call disable() to stop logging permanently.
  */
 export class DataCollector {
-  private enabled: boolean;
+  /** Whether local logging is active. Starts true, set to false permanently
+   *  if the user clicks "No thanks" on the consent prompt. */
+  private enabled = true;
   private currentSessionId: string | null = null;
   private seq = 0;
   /** Count of events recorded since startSession (excluding start/end). */
@@ -81,9 +84,7 @@ export class DataCollector {
   /** Full path to the JSONL data file. */
   private dataFilePath: string;
 
-  constructor(enabled: boolean) {
-    this.enabled = enabled;
-
+  constructor() {
     // Resolve paths
     const dataDir = path.join(os.homedir(), ".conduit", "telemetry");
     this.dataFilePath = path.join(dataDir, "sessions.jsonl");
@@ -125,7 +126,7 @@ export class DataCollector {
   /** End the current telemetry session. Writes a session_end record with
    *  outcome, cost, duration, and token usage. Skips if no events were recorded. */
   endSession(outcome: SessionOutcome): void {
-    if (!this.enabled || !this.currentSessionId) return;
+    if (!this.currentSessionId) return;
     // Don't write anything if no real events happened (empty session)
     if (this.eventCount === 0) {
       this.currentSessionId = null;
@@ -178,9 +179,16 @@ export class DataCollector {
 
   // ── Settings ────────────────────────────────────────────────
 
-  /** Update the enabled state at runtime (e.g. user toggled the setting). */
-  updateSettings(enabled: boolean): void {
-    this.enabled = enabled;
+  /** Stop local logging. Called when the user explicitly
+   *  declines the consent prompt ("No thanks"). */
+  disable(): void {
+    this.enabled = false;
+  }
+
+  /** Re-enable local logging. Called when the user manually turns on
+   *  the telemetry.enabled setting after previously declining. */
+  enable(): void {
+    this.enabled = true;
   }
 
   /** Returns the full path to the JSONL data file (for "View Collected Data" command). */
