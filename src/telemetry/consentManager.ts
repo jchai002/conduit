@@ -5,9 +5,9 @@
  * successful conversation (not on install — let them see value first).
  * One click enables collection of both metadata and Claude's AI outputs.
  *
- * The notification is shown at most once:
+ * Flow:
  * - "Enable" → sets businessContext.telemetry.enabled = true
- * - "What's collected?" → opens the data collection plan doc
+ * - "What's collected?" → opens TELEMETRY.md, then re-shows the Enable/No thanks prompt
  * - "No thanks" → remembers dismissal in globalState, never asks again
  *
  * Also respects VS Code's global telemetry setting — if telemetry.telemetryLevel
@@ -15,8 +15,13 @@
  */
 import * as vscode from "vscode";
 
-/** Key used in globalState to track whether the consent prompt was dismissed. */
+/** Key used in globalState to track whether the consent prompt was explicitly dismissed. */
 const DISMISSED_KEY = "conduit.telemetry.dismissed";
+/** Key used in globalState to count how many times the prompt has been shown.
+ *  After MAX_PROMPT_SHOWS without an explicit response, stop showing it —
+ *  the user clearly isn't interested but didn't bother clicking "No thanks". */
+const SHOW_COUNT_KEY = "conduit.telemetry.showCount";
+const MAX_PROMPT_SHOWS = 3;
 
 export class ConsentManager {
   constructor(private context: vscode.ExtensionContext) {}
@@ -43,6 +48,12 @@ export class ConsentManager {
     // Already dismissed — never nag
     if (this.context.globalState.get<boolean>(DISMISSED_KEY)) return;
 
+    // Shown too many times without a response — treat as implicit "no"
+    const showCount = this.context.globalState.get<number>(SHOW_COUNT_KEY, 0);
+    if (showCount >= MAX_PROMPT_SHOWS) return;
+
+    await this.context.globalState.update(SHOW_COUNT_KEY, showCount + 1);
+
     const choice = await vscode.window.showInformationMessage(
       "Help improve Conduit? We'd collect anonymous usage patterns and AI responses " +
       "to train better context search. Never your Slack messages.",
@@ -55,9 +66,9 @@ export class ConsentManager {
       await vscode.workspace.getConfiguration("businessContext")
         .update("telemetry.enabled", true, vscode.ConfigurationTarget.Global);
     } else if (choice === "What's collected?") {
-      // Open the data collection plan for full transparency
+      // Open the user-facing telemetry doc so they can read what's collected
       const docUri = vscode.Uri.joinPath(
-        this.context.extensionUri, "plans", "data-collection-plan.md"
+        this.context.extensionUri, "docs", "TELEMETRY.md"
       );
       try {
         await vscode.commands.executeCommand("markdown.showPreview", docUri);
@@ -66,9 +77,35 @@ export class ConsentManager {
         const doc = await vscode.workspace.openTextDocument(docUri);
         await vscode.window.showTextDocument(doc);
       }
-    } else {
-      // "No thanks" or dismissed the notification
+      // Re-show a follow-up prompt so the user can still Enable or dismiss
+      // after reading. VS Code notifications are one-shot — clicking any
+      // button dismisses them. Without this, "What's collected?" would
+      // effectively mean "ask me again next conversation" which feels broken.
+      await this.showEnablePrompt();
+    } else if (choice === "No thanks") {
+      // Explicit rejection — remember it and never ask again
       await this.context.globalState.update(DISMISSED_KEY, true);
     }
+    // else: undefined = notification timed out or was closed via X.
+    // Don't mark as dismissed — re-show on the next conversation completion.
+    // This gives users who were busy a chance to respond next time.
+  }
+
+  /** Simplified follow-up prompt shown after the user reads the telemetry doc.
+   *  Two choices only — they've already seen the full explanation. */
+  private async showEnablePrompt(): Promise<void> {
+    const choice = await vscode.window.showInformationMessage(
+      "Enable anonymous data collection for Conduit?",
+      "Enable",
+      "No thanks",
+    );
+
+    if (choice === "Enable") {
+      await vscode.workspace.getConfiguration("businessContext")
+        .update("telemetry.enabled", true, vscode.ConfigurationTarget.Global);
+    } else if (choice === "No thanks") {
+      await this.context.globalState.update(DISMISSED_KEY, true);
+    }
+    // else: timed out / closed — re-show next time
   }
 }
