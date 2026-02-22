@@ -12,7 +12,7 @@
  * 3. Worker validates, rate-limits, and writes to R2
  * 4. Update the byte offset in sync-state.json
  *
- * Runs on a timer (every 6 hours) and can be triggered manually.
+ * Runs on a timer (every 30 minutes) and can be triggered manually.
  * Silently skips if offline, disabled, or no new data exists.
  *
  * Data is partitioned in R2 as: {deviceId}/{date}/{timestamp}.jsonl
@@ -23,8 +23,8 @@ import * as path from "path";
 import * as os from "os";
 import * as vscode from "vscode";
 
-/** How often to sync (in milliseconds). 6 hours. */
-const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+/** How often to sync (in milliseconds). 30 minutes. */
+const SYNC_INTERVAL_MS = 30 * 60 * 1000;
 
 /** Sync state persisted between runs — tracks how much data has been uploaded. */
 interface SyncState {

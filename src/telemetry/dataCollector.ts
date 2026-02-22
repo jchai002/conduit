@@ -26,7 +26,7 @@ import * as crypto from "crypto";
 
 /** Max data file size (1 GB). When exceeded, the file is deleted and
  *  logging starts fresh. Unsynced data from the tail end may be lost,
- *  but the window is small (at most one sync interval ≈ 6 hours). */
+ *  but the window is small (at most one sync interval ≈ 30 minutes). */
 const MAX_DATA_FILE_BYTES = 1_073_741_824;
 
 /** Outcome of a completed session — passed to endSession(). */
