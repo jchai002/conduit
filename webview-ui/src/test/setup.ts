@@ -8,6 +8,13 @@
  */
 import "@testing-library/jest-dom";
 
+/** ResizeObserver doesn't exist in jsdom — mock it for components like CollapsibleView */
+globalThis.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as any;
+
 /** Mock postMessage function — tests can spy on this to verify sends */
 export const mockPostMessage = vi.fn();
 

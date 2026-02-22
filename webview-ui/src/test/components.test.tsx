@@ -30,8 +30,8 @@ describe("Header", () => {
   it("renders title, subtitle, and action buttons", () => {
     renderApp();
     expect(screen.getByText("Business context for AI coding")).toBeInTheDocument();
-    expect(screen.getByText("History")).toBeInTheDocument();
-    expect(screen.getByText("+ New")).toBeInTheDocument();
+    expect(screen.getByText("No conversation")).toBeInTheDocument();
+    expect(screen.getByTitle("Start new conversation")).toBeInTheDocument();
   });
 });
 

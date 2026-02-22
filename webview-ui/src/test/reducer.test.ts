@@ -204,7 +204,7 @@ describe("appReducer", () => {
     expect(state.messages[0].kind).toBe("todo-list");
   });
 
-  it("TodoWrite updates existing todo list in place", () => {
+  it("TodoWrite appends new todo list (keeps old visible in chat)", () => {
     const withTodo = appReducer(initialState, {
       type: "ext/sdk-tool-call",
       toolName: "TodoWrite",
@@ -220,12 +220,12 @@ describe("appReducer", () => {
       ] }),
       toolCallId: "tw2",
     });
-    // Still only one todo-list item — updated in place
-    expect(state.messages).toHaveLength(1);
-    const todo = state.messages[0];
-    if (todo.kind === "todo-list") {
-      expect(todo.todos).toHaveLength(2);
-      expect(todo.todos[0].status).toBe("completed");
+    // Two separate todo-list items — appended so latest stays near bottom of chat
+    expect(state.messages).toHaveLength(2);
+    const latest = state.messages[1];
+    if (latest.kind === "todo-list") {
+      expect(latest.todos).toHaveLength(2);
+      expect(latest.todos[0].status).toBe("completed");
     }
   });
 
