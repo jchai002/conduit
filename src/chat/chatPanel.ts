@@ -113,6 +113,8 @@ export class ChatPanel {
   }
 
   private dispose() {
+    // End any open telemetry session before tearing down
+    this.dataCollector.endSession({ outcome: "success" });
     if (this.conversation) {
       this.conversation.cancel();
       this.conversation = null;
@@ -275,11 +277,15 @@ export class ChatPanel {
     this.activeSessionId = tempId;
     this.messageBuffer = [{ role: "user", text, timestamp: Date.now() }];
 
-    // Start a telemetry session — records metadata about this conversation.
-    // The collector is a no-op if telemetry is disabled.
+    // Start a telemetry session for this conversation. The session stays
+    // open across follow-ups so the entire conversation shares one sid.
+    // endSession() is called when the user starts a NEW conversation or
+    // the panel disposes.
+    this.dataCollector.endSession({ outcome: "success" }); // close any prior conversation
     this.dataCollector.startSession({
       model: this.currentModel ?? "default",
       permissionMode: this.permissionMode,
+      conversationId: this.activeSessionId ?? undefined,
     });
     this.dataCollector.recordUserQuery(text.length);
 
@@ -325,12 +331,8 @@ export class ChatPanel {
 
     this.messageBuffer.push({ role: "user", text, timestamp: Date.now() });
 
-    // Start a new telemetry session for the follow-up — the previous session
-    // ended on sdk-done, so currentSessionId is null at this point.
-    this.dataCollector.startSession({
-      model: this.currentModel ?? "default",
-      permissionMode: this.permissionMode,
-    });
+    // Record the follow-up into the existing telemetry session —
+    // the whole conversation shares one sid.
     this.dataCollector.recordUserFollowup(text.length);
 
     this.post({ type: "status", text: "Thinking..." });
@@ -395,9 +397,22 @@ export class ChatPanel {
         break;
       case "sdk-done":
         this.flushMessageBuffer();
-        // End the telemetry session with outcome and token usage
-        this.dataCollector.endSession({
-          outcome: "success",
+        // Update session ID from agent BEFORE recording turn_end so the
+        // turn_end event (and all subsequent events) use the permanent ID.
+        // The first few events (session_start, user_query) will have the
+        // temp UUID — updateSessionId emits a linking event to join them.
+        if (this.conversation?.sessionId && this.activeSessionId) {
+          const agentSessionId = this.conversation.sessionId;
+          if (agentSessionId !== this.activeSessionId) {
+            this.sessionStore.updateSessionId(this.activeSessionId, agentSessionId);
+            this.dataCollector.updateSessionId(agentSessionId);
+            this.activeSessionId = agentSessionId;
+          }
+        }
+        // Record a turn-end event with the latest token/cost snapshot.
+        // The session stays open — endSession() fires when the user starts
+        // a new conversation or the panel closes.
+        this.dataCollector.recordTurnEnd({
           costUsd: msg.cost,
           durationMs: msg.duration,
           contextWindow: msg.contextWindow,
@@ -409,14 +424,6 @@ export class ChatPanel {
         // Show the consent notification after the first successful conversation.
         // Non-blocking — runs in the background, doesn't delay the UI.
         this.consentManager.maybeShowPrompt();
-        // Update session ID from agent if available
-        if (this.conversation?.sessionId && this.activeSessionId) {
-          const agentSessionId = this.conversation.sessionId;
-          if (agentSessionId !== this.activeSessionId) {
-            this.sessionStore.updateSessionId(this.activeSessionId, agentSessionId);
-            this.activeSessionId = agentSessionId;
-          }
-        }
         break;
       case "sdk-compact-summary":
         this.messageBuffer.push({ role: "info", text: "[compact] " + msg.text.slice(0, 2000), timestamp: Date.now() });
@@ -469,6 +476,16 @@ export class ChatPanel {
     this.activeSessionId = sessionId;
     this.messageBuffer = [];
     this.post({ type: "session-opened", meta: data.meta, messages: data.messages });
+
+    // Start a telemetry session with the restored conversation ID so
+    // follow-ups in this restored conversation share the same sid as
+    // the original conversation — even across VS Code restarts.
+    this.dataCollector.endSession({ outcome: "success" }); // close any prior
+    this.dataCollector.startSession({
+      model: this.currentModel ?? "default",
+      permissionMode: this.permissionMode,
+      conversationId: sessionId,
+    });
 
     // Pre-create conversation with existing session ID for resume
     this.recreateConversationForResume(sessionId);

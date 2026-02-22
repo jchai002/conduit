@@ -104,9 +104,12 @@ export class DataCollector {
 
   // ── Session lifecycle ───────────────────────────────────────
 
-  /** Begin a new telemetry session. Returns the session ID. */
-  startSession(opts: { model: string; permissionMode: string }): string {
-    const sid = crypto.randomUUID().slice(0, 12);
+  /** Begin a new telemetry session. Returns the session ID.
+   *  Pass `conversationId` to link telemetry across VS Code restarts —
+   *  restored conversations reuse the same sid so follow-ups from
+   *  Monday and Tuesday show up as one continuous conversation. */
+  startSession(opts: { model: string; permissionMode: string; conversationId?: string }): string {
+    const sid = opts.conversationId || crypto.randomUUID().slice(0, 12);
     this.currentSessionId = sid;
     this.seq = 0;
     this.eventCount = 0;
@@ -121,6 +124,20 @@ export class DataCollector {
     };
 
     return sid;
+  }
+
+  /** Update the session ID mid-conversation. Called when the agent's real
+   *  session ID arrives (after the first sdk-done) to replace the temp UUID.
+   *  Emits a `session_linked` event so the data pipeline can join the early
+   *  events (session_start, user_query) written under the old temp ID to
+   *  all subsequent events under the permanent agent session ID. */
+  updateSessionId(newId: string): void {
+    if (!this.currentSessionId) return;
+    const oldId = this.currentSessionId;
+    this.currentSessionId = newId;
+    // Emit a linking record under the NEW sid pointing back to the old one.
+    // This lets a simple GROUP BY on previousSid reconstruct the full conversation.
+    this.recordEvent({ event: "session_linked", previousSid: oldId });
   }
 
   /** End the current telemetry session. Writes a session_end record with
@@ -175,6 +192,30 @@ export class DataCollector {
   /** Record a tool result returned to Claude. Stores result length and latency. */
   recordToolResult(toolCallId: string, resultLength: number, durationMs: number): void {
     this.recordEvent({ event: "tool_result", toolCallId, resultLength, durationMs });
+  }
+
+  /** Record the end of an SDK turn (sdk-done). The session stays open across
+   *  follow-ups — this just logs the token/cost snapshot for that turn so we
+   *  can track per-turn usage within a long conversation. */
+  recordTurnEnd(stats: {
+    costUsd?: number;
+    durationMs?: number;
+    contextWindow?: number;
+    inputTokens?: number;
+    outputTokens?: number;
+    cacheReadTokens?: number;
+    cacheCreationTokens?: number;
+  }): void {
+    this.recordEvent({
+      event: "turn_end",
+      ...(stats.costUsd !== undefined ? { costUsd: stats.costUsd } : {}),
+      ...(stats.durationMs !== undefined ? { durationMs: stats.durationMs } : {}),
+      ...(stats.contextWindow !== undefined ? { contextWindow: stats.contextWindow } : {}),
+      ...(stats.inputTokens !== undefined ? { inputTokens: stats.inputTokens } : {}),
+      ...(stats.outputTokens !== undefined ? { outputTokens: stats.outputTokens } : {}),
+      ...(stats.cacheReadTokens !== undefined ? { cacheReadTokens: stats.cacheReadTokens } : {}),
+      ...(stats.cacheCreationTokens !== undefined ? { cacheCreationTokens: stats.cacheCreationTokens } : {}),
+    });
   }
 
   // ── Settings ────────────────────────────────────────────────
