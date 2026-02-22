@@ -1,20 +1,21 @@
 /**
- * SyncService — periodically uploads local telemetry data to S3.
+ * SyncService — periodically uploads local telemetry data to R2 via the
+ * Cloudflare Worker.
  *
  * Reads new JSONL lines from ~/.conduit/telemetry/sessions.jsonl (using a
- * byte offset to avoid re-uploading old data) and uploads them via a
- * pre-signed S3 URL obtained from a backend API.
+ * byte offset to avoid re-uploading old data) and POSTs them directly to
+ * the Worker's /telemetry/upload endpoint. The Worker writes to R2.
  *
  * The upload flow:
  * 1. Read sessions.jsonl from the last synced byte offset to EOF
- * 2. POST to the upload-url endpoint with deviceId + date → get pre-signed URL
- * 3. PUT the JSONL chunk directly to S3 via the pre-signed URL
+ * 2. POST the JSONL chunk to the Worker with the device ID in a header
+ * 3. Worker validates, rate-limits, and writes to R2
  * 4. Update the byte offset in sync-state.json
  *
  * Runs on a timer (every 6 hours) and can be triggered manually.
  * Silently skips if offline, disabled, or no new data exists.
  *
- * Data is partitioned in S3 as: {deviceId}/{date}.jsonl
+ * Data is partitioned in R2 as: {deviceId}/{date}/{timestamp}.jsonl
  * This makes per-device deletion trivial for GDPR compliance.
  */
 import * as fs from "fs";
@@ -99,7 +100,7 @@ export class SyncService {
            config.get<boolean>("telemetry.syncEnabled", false);
   }
 
-  /** Core sync logic — reads new data and uploads to S3 via pre-signed URL. */
+  /** Core sync logic — reads new data and POSTs it to the Worker. */
   private async performSync(): Promise<void> {
     // Read the data file — bail if it doesn't exist or is empty
     if (!fs.existsSync(this.dataFilePath)) return;
@@ -128,60 +129,33 @@ export class SyncService {
       return;
     }
 
-    // Get pre-signed upload URL from backend
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const uploadUrl = await this.getPresignedUrl(deviceId, today);
-    if (!uploadUrl) return;
+    // Upload URL — defaults to the production Worker
+    const workerUrl = vscode.workspace.getConfiguration("businessContext")
+      .get<string>("telemetry.syncUrl", "https://conduit-oauth.jchai002.workers.dev");
 
-    // Upload directly to S3
-    const response = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": "application/x-ndjson" },
+    // POST directly to the Worker. It handles rate limiting and writes to R2.
+    const response = await fetch(`${workerUrl}/telemetry/upload`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-ndjson",
+        "X-Device-ID": deviceId,
+      },
       body: newData,
     });
 
+    if (response.status === 429) {
+      console.log("[Conduit] Telemetry upload rate-limited — will retry next cycle");
+      return;
+    }
+
     if (!response.ok) {
-      console.error(`[Conduit] S3 upload failed: ${response.status} ${response.statusText}`);
+      console.error(`[Conduit] Telemetry upload failed: ${response.status} ${response.statusText}`);
       return;
     }
 
     // Success — advance the byte offset
     this.saveSyncState({ lastSyncByteOffset: stat.size });
     console.log(`[Conduit] Telemetry synced: ${buffer.length} bytes uploaded`);
-  }
-
-  /** Requests a pre-signed S3 PUT URL from the backend API.
-   *  Returns null if the request fails (offline, server error, etc.). */
-  private async getPresignedUrl(deviceId: string, date: string): Promise<string | null> {
-    // TODO: Replace with actual backend URL when the Cloudflare Worker
-    // endpoint is set up. For now, the sync service is wired up but
-    // uploads will silently fail until the backend exists.
-    const apiUrl = vscode.workspace.getConfiguration("businessContext")
-      .get<string>("telemetry.syncUrl", "");
-
-    if (!apiUrl) {
-      console.log("[Conduit] No telemetry sync URL configured — skipping upload");
-      return null;
-    }
-
-    try {
-      const response = await fetch(`${apiUrl}/telemetry/upload-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId, date }),
-      });
-
-      if (!response.ok) {
-        console.error(`[Conduit] Failed to get upload URL: ${response.status}`);
-        return null;
-      }
-
-      const data = await response.json() as { presignedUrl?: string };
-      return data.presignedUrl ?? null;
-    } catch (err) {
-      console.error("[Conduit] Failed to get upload URL:", err);
-      return null;
-    }
   }
 
   private loadSyncState(): SyncState {

@@ -1,12 +1,13 @@
-# Cloudflare Worker config for Conduit OAuth proxy.
+# Cloudflare Worker config for Conduit OAuth proxy + telemetry relay.
 #
 # Before deploying:
 #   1. Create a KV namespace:  wrangler kv namespace create OAUTH_KV
 #   2. Copy the ID into the [[kv_namespaces]] block below
-#   3. Set secrets:
+#   3. Create an R2 bucket:    wrangler r2 bucket create conduit-telemetry
+#   4. Set secrets:
 #        wrangler secret put SLACK_CLIENT_ID
 #        wrangler secret put SLACK_CLIENT_SECRET
-#   4. Deploy:  wrangler deploy
+#   5. Deploy:  wrangler deploy
 
 name = "conduit-oauth"
 main = "cloudflare-worker.js"
@@ -15,3 +16,7 @@ compatibility_date = "2024-09-01"
 [[kv_namespaces]]
 binding = "OAUTH_KV"
 id = "14dd4ee5d43741958494024421ea5203"
+
+[[r2_buckets]]
+binding = "TELEMETRY_BUCKET"
+bucket_name = "conduit-telemetry"

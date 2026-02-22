@@ -22,10 +22,14 @@
  *   - SLACK_CLIENT_SECRET
  *
  * KV namespace binding: OAUTH_KV
+ * R2 bucket binding: TELEMETRY_BUCKET
  *
  * Deployment:
  *   wrangler deploy
  */
+
+/** Max upload size (1MB). Telemetry JSONL chunks should be well under this. */
+const MAX_UPLOAD_BYTES = 1_048_576;
 
 /** Daily rate limits per identifier. */
 const OAUTH_RATE_LIMIT = 20;   // per IP
@@ -71,6 +75,13 @@ export default {
         return new Response("Rate limit exceeded. Try again tomorrow.", { status: 429 });
       }
       return handleExchange(url, env);
+    }
+
+    // ── Telemetry upload ────────────────────────────────────
+    // Extension POSTs JSONL telemetry data directly. The Worker
+    // writes it to R2 — no pre-signed URL round trip needed.
+    if (url.pathname === "/telemetry/upload" && request.method === "POST") {
+      return handleTelemetryUpload(request, env);
     }
 
     // Health check
@@ -188,4 +199,52 @@ async function handleExchange(url, env) {
 
   const { userToken, teamName } = JSON.parse(tokenPayload);
   return Response.json({ ok: true, userToken, teamName });
+}
+
+// ── Telemetry Upload ──────────────────────────────────────
+
+/**
+ * Accepts JSONL telemetry data and writes it to R2.
+ *
+ * Request:
+ *   POST /telemetry/upload
+ *   Header: X-Device-ID: <uuid>
+ *   Body: raw JSONL text
+ *
+ * R2 key format: {deviceId}/{date}/{timestamp}.jsonl
+ * Each upload is a separate object — R2 doesn't support append,
+ * so we use unique timestamps. Aggregation happens at read time.
+ */
+async function handleTelemetryUpload(request, env) {
+  const deviceId = request.headers.get("X-Device-ID");
+  if (!deviceId || deviceId.length > 64) {
+    return Response.json({ ok: false, error: "missing_or_invalid_device_id" }, { status: 400 });
+  }
+
+  // Rate limit: 10 uploads per device per day
+  if (!await checkRateLimit(env.OAUTH_KV, "upload", deviceId, UPLOAD_RATE_LIMIT)) {
+    return Response.json({ ok: false, error: "rate_limit_exceeded" }, { status: 429 });
+  }
+
+  // Read and validate body size
+  const body = await request.text();
+  if (!body.trim()) {
+    return Response.json({ ok: false, error: "empty_body" }, { status: 400 });
+  }
+  if (body.length > MAX_UPLOAD_BYTES) {
+    return Response.json({ ok: false, error: "payload_too_large" }, { status: 413 });
+  }
+
+  // Write to R2 — unique key per upload to avoid overwrites.
+  // Format: {deviceId}/{date}/{timestamp}.jsonl
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const timestamp = now.getTime();
+  const key = `${deviceId}/${date}/${timestamp}.jsonl`;
+
+  await env.TELEMETRY_BUCKET.put(key, body, {
+    httpMetadata: { contentType: "application/x-ndjson" },
+  });
+
+  return Response.json({ ok: true, key });
 }
