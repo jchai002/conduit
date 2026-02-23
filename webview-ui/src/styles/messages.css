@@ -1,0 +1,123 @@
+.message {
+  padding: 6px 20px;
+  border-left: 2px solid transparent;
+}
+
+.message + .message {
+  margin-top: 2px;
+}
+
+/* Turn separator between different speakers */
+.message.user + .message:not(.user),
+.message:not(.user) + .message.user {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.06));
+}
+
+.message-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  letter-spacing: 0.3px;
+}
+
+.message-content {
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* User messages — subtle left accent */
+.message.user {
+  border-left-color: var(--vscode-terminal-ansiBrightBlue, #6cb6ff);
+}
+
+.message.user .message-label {
+  color: var(--vscode-terminal-ansiBrightBlue, #6cb6ff);
+}
+
+.message.user .message-content {
+  color: var(--vscode-foreground);
+}
+
+/* Assistant messages — clean text, branded accent */
+.message.assistant {
+  border-left-color: #e8875a;
+}
+
+.message.assistant .message-label {
+  color: #e8875a;
+}
+
+.message.assistant .message-content {
+  color: var(--vscode-foreground);
+}
+
+/* Error messages */
+.message.error {
+  border-left-color: var(--vscode-terminal-ansiRed, #e06c75);
+}
+
+.message.error .message-label {
+  color: var(--vscode-terminal-ansiRed, #e06c75);
+}
+
+.message.error .message-content {
+  color: var(--vscode-terminal-ansiRed, #e06c75);
+  opacity: 0.9;
+}
+
+/* Info messages */
+.message.info {
+  border-left-color: var(--vscode-terminal-ansiBrightBlue, #6cb6ff);
+  opacity: 0.75;
+}
+
+.message.info .message-label {
+  color: var(--vscode-terminal-ansiBrightBlue, #6cb6ff);
+}
+
+.message.info .message-content {
+  font-size: 12px;
+}
+
+/* Log messages — minimal, muted */
+.message.log {
+  border-left-color: transparent;
+  opacity: 0.5;
+}
+
+.message.log .message-content {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* Agent output messages */
+.message.agent {
+  border-left-color: var(--vscode-terminal-ansiCyan, #56b6c2);
+}
+
+.message.agent .message-label {
+  color: var(--vscode-terminal-ansiCyan, #56b6c2);
+}
+
+.message.agent .message-content {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+}
+
+/* Compact summary — shown when the SDK compacts conversation context */
+.message.compact-summary {
+  border-left-color: var(--vscode-terminal-ansiBlue, #61afef);
+}
+
+.message.compact-summary .message-label {
+  color: var(--vscode-terminal-ansiBlue, #61afef);
+}
+
+.message.compact-summary .message-content {
+  opacity: 0.8;
+  font-size: 12px;
+}

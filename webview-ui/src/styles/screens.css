@@ -1,0 +1,500 @@
+.welcome {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.welcome h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8875a;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.welcome p {
+  margin-bottom: 6px;
+  line-height: 1.6;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.welcome code {
+  background: var(--vscode-input-background);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  opacity: 1;
+}
+
+/* ── Setup screen — onboarding flow for CLI installation + auth ── */
+
+.setup-screen {
+  padding: 48px 20px 32px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+}
+
+.setup-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e8875a;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.setup-subtitle {
+  font-size: 13px;
+  opacity: 0.7;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* Step list — left-aligned within the centered container */
+.setup-steps {
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto 24px;
+}
+
+.setup-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.setup-step + .setup-step {
+  border-top: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.06));
+}
+
+/* Step indicator — numbered circle or checkmark */
+.setup-step-indicator {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.15));
+  color: var(--vscode-descriptionForeground);
+}
+
+.setup-step-done .setup-step-indicator {
+  border-color: var(--vscode-terminal-ansiGreen, #4d9375);
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.setup-step-current .setup-step-indicator {
+  border-color: #e8875a;
+  color: #e8875a;
+}
+
+.setup-step-pending .setup-step-indicator {
+  opacity: 0.4;
+}
+
+.setup-step-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.setup-step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  line-height: 24px; /* Vertically align with the indicator circle */
+}
+
+.setup-step-done .setup-step-label {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.6;
+}
+
+.setup-step-pending .setup-step-label {
+  opacity: 0.4;
+}
+
+.setup-step-detail {
+  margin-top: 8px;
+}
+
+.setup-step-hint {
+  font-size: 12px;
+  opacity: 0.7;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.setup-step-hint code {
+  background: var(--vscode-input-background);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  color: var(--vscode-foreground);
+}
+
+/* Install command — monospace block the user can copy */
+.setup-command {
+  display: block;
+  background: var(--vscode-input-background);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  user-select: all;
+  margin-top: 4px;
+}
+
+/* Primary action button (Open Terminal) — brand orange, filled */
+.setup-action-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid #e8875a;
+  background: #e8875a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.setup-action-btn:hover {
+  opacity: 0.85;
+}
+
+/* Secondary action button (Check Again) — ghost style */
+.setup-check-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.15));
+  background: transparent;
+  color: var(--vscode-foreground);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.setup-check-btn:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.04));
+}
+
+/* ── Provider Connection ─────────────────────────────────── */
+
+.provider-connection {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--vscode-panel-border, #3e4451);
+}
+
+.provider-connection-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--vscode-descriptionForeground, #abb2bf);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.provider-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--vscode-panel-border, #3e4451);
+  border-radius: 6px;
+  background: var(--vscode-editor-background, #282c34);
+}
+
+.provider-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.provider-icon-svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--vscode-foreground, #abb2bf);
+}
+
+.provider-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.provider-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--vscode-foreground, #abb2bf);
+}
+
+.provider-status-connected {
+  font-size: 11px;
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.provider-status-disconnected {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground, #5c6370);
+}
+
+.provider-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.provider-btn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.provider-btn:hover {
+  opacity: 0.85;
+}
+
+.provider-btn-primary {
+  background: #e8875a;
+  color: #fff;
+}
+
+.provider-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--vscode-panel-border, #3e4451);
+  color: var(--vscode-foreground, #abb2bf);
+}
+
+/* ── Business Context Drop-Up Menu ──────────────────────────── */
+/* Compact toolbar button + drop-up popup for connecting providers */
+
+.biz-ctx-wrapper {
+  position: relative;
+}
+
+.biz-ctx-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: var(--vscode-descriptionForeground, #858585);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: color 0.15s;
+}
+.biz-ctx-trigger:hover {
+  color: var(--vscode-foreground, #cccccc);
+  background: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.06));
+}
+
+.biz-ctx-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.biz-ctx-popup {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 280px;
+  background: var(--vscode-dropdown-background, #252526);
+  border: 1px solid var(--vscode-panel-border, #333);
+  border-radius: 6px;
+  padding: 6px 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.biz-ctx-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+.biz-ctx-row + .biz-ctx-row {
+  border-top: 1px solid var(--vscode-panel-border, #333);
+}
+
+.biz-ctx-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--vscode-descriptionForeground, #858585);
+}
+
+.biz-ctx-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.biz-ctx-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vscode-foreground, #cccccc);
+}
+
+.biz-ctx-status {
+  font-size: 10px;
+  color: var(--vscode-descriptionForeground, #858585);
+}
+.biz-ctx-status.connected {
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.biz-ctx-action {
+  flex-shrink: 0;
+}
+
+/* Disabled button variant for "Coming soon" stubs */
+.provider-btn-disabled {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  border: 1px solid var(--vscode-panel-border, #3e4451);
+  background: transparent;
+  color: var(--vscode-disabledForeground, #5c6370);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ── Slash command menu ─────────────────────────────────────── */
+/* Popup that appears above the input area when user types "/" */
+
+.slash-command-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--vscode-dropdown-background, #252526);
+  border: 1px solid var(--vscode-panel-border, #333);
+  border-radius: 6px;
+  padding: 4px 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Command list items — each row is a button */
+.slash-command-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--vscode-foreground, #ccc);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.slash-command-item:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
+}
+
+.slash-command-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.slash-command-name {
+  color: var(--vscode-descriptionForeground, #888);
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.slash-command-label {
+  font-weight: 500;
+}
+
+.slash-command-hint {
+  color: var(--vscode-descriptionForeground, #888);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* Model picker view */
+.slash-command-back {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--vscode-panel-border, #333);
+  color: var(--vscode-descriptionForeground, #888);
+  cursor: pointer;
+  text-align: left;
+  font-size: 12px;
+}
+
+.slash-command-back:hover {
+  color: var(--vscode-foreground, #ccc);
+}
+
+.slash-model-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--vscode-foreground, #ccc);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.slash-model-item:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
+}
+
+.slash-model-item.active {
+  background: var(--vscode-list-activeSelectionBackground, rgba(255, 255, 255, 0.08));
+}
+
+.slash-model-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.slash-model-label {
+  font-weight: 500;
+}
+
+.slash-model-description {
+  color: var(--vscode-descriptionForeground, #888);
+  font-size: 12px;
+}
+
+.slash-model-check {
+  color: var(--vscode-terminal-ansiGreen, #89d185);
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}

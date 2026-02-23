@@ -1,0 +1,242 @@
+/* ── CollapsibleView — expand/collapse wrapper for long content ── */
+
+.collapsible {
+  position: relative;
+}
+
+/* Border + padding when content overflows (collapsed or expanded).
+   Applied to the outer wrapper so both content and buttons are inside. */
+.collapsible-collapsed,
+.collapsible-expanded {
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.15));
+  border-radius: 3px;
+  padding: 8px;
+}
+
+/* Expand button container — bottom-right inside the border */
+.collapsible-fade {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* Shared button base for expand/close */
+.collapsible-btn {
+  pointer-events: auto;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-family: var(--vscode-font-family, sans-serif);
+  border-radius: 3px;
+  padding: 2px 8px;
+  background: var(--vscode-button-secondaryBackground, #3a3d41);
+  color: var(--vscode-button-secondaryForeground, #ccc);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+/* Show buttons on hover over the collapsible area */
+.collapsible:hover .collapsible-btn {
+  opacity: 1;
+}
+
+.collapsible-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground, #45494e);
+}
+
+/* Expand button — bottom-right below content */
+.collapsible-expand-btn {
+  margin: 0;
+}
+
+/* Close button — upper-right corner inside the border, sticky so it
+   stays visible while scrolling the expanded content. Always visible
+   (not gated behind hover) since expanded state needs a clear exit. */
+.collapsible-close-btn {
+  position: sticky;
+  top: 4px;
+  float: right;
+  margin: 4px 4px -16px 0;
+  z-index: 2;
+  opacity: 0.7 !important;
+}
+
+.collapsible-close-btn:hover {
+  opacity: 1 !important;
+}
+
+/* Tool calls — amber left accent, compact */
+.message.tool-call {
+  border-left-color: var(--vscode-terminal-ansiYellow, #e5c07b);
+  padding-left: 18px;
+}
+
+.message.tool-call .message-label {
+  color: var(--vscode-terminal-ansiYellow, #e5c07b);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.tool-input {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  padding: 6px 10px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-editor-background);
+  border-radius: 3px;
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
+}
+
+.tool-result-placeholder {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  padding: 4px 0;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+/* Tool results — green accent, nested under tool call */
+.message-content.tool-result {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  padding: 6px 10px;
+  margin-top: 4px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-editor-background);
+  border-radius: 3px;
+  border: 1px solid var(--vscode-terminal-ansiGreen, rgba(77,147,117,0.3));
+  opacity: 0.7;
+}
+
+/* Edit / Write — inline diff view */
+.message.tool-edit,
+.message.tool-write {
+  border-left-color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.message.tool-edit .message-label {
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.message.tool-write .message-label {
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.diff-file-path {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  padding: 3px 0;
+  opacity: 0.7;
+}
+
+.diff-block {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.diff-line {
+  padding: 0 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.diff-removed {
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--vscode-terminal-ansiRed, #e06c75);
+}
+
+.diff-added {
+  background: rgba(63, 185, 80, 0.1);
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.diff-truncated {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.5;
+  font-style: italic;
+  padding: 2px 8px;
+}
+
+/* Bash — terminal command style */
+.message.tool-bash {
+  border-left-color: var(--vscode-terminal-ansiYellow, #e5c07b);
+}
+
+.message.tool-bash .message-label {
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  font-weight: 400;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.bash-command {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 6px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
+  background: rgba(0, 0, 0, 0.15);
+  margin-top: 2px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.bash-prompt {
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+  user-select: none;
+}
+
+.bash-cmd-text {
+  color: var(--vscode-foreground);
+}
+
+/* Bash tool result — terminal output style */
+.message.tool-bash .tool-result {
+  background: rgba(0, 0, 0, 0.15);
+  border-color: var(--vscode-panel-border, rgba(255,255,255,0.08));
+}
+
+/* Read — file path display */
+.message.tool-read {
+  border-left-color: var(--vscode-terminal-ansiCyan, #56b6c2);
+}
+
+.message.tool-read .message-label {
+  color: var(--vscode-terminal-ansiCyan, #56b6c2);
+}
+
+/* Glob / Grep — search display */
+.message.tool-search {
+  border-left-color: var(--vscode-terminal-ansiYellow, #e5c07b);
+}
+
+.message.tool-search .message-label {
+  color: var(--vscode-terminal-ansiYellow, #e5c07b);
+}
+
+.search-query {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--vscode-foreground);
+  margin-top: 2px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

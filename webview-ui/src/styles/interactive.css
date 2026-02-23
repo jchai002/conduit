@@ -1,0 +1,316 @@
+/* Todo list — checklist with strikethrough on completed items */
+.message.todo-list {
+  border-left-color: var(--vscode-terminal-ansiCyan, #56b6c2);
+  padding-left: 18px;
+}
+
+.message.todo-list .message-label {
+  color: var(--vscode-terminal-ansiCyan, #56b6c2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.todo-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.todo-checkbox {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.todo-text {
+  flex: 1;
+}
+
+.todo-item.todo-completed .todo-checkbox {
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.todo-item.todo-completed .todo-text {
+  text-decoration: line-through;
+  opacity: 0.4;
+  color: var(--vscode-descriptionForeground);
+}
+
+.todo-item.todo-in_progress .todo-checkbox {
+  color: var(--vscode-terminal-ansiCyan, #56b6c2);
+}
+
+.todo-item.todo-in_progress .todo-text {
+  color: var(--vscode-foreground);
+}
+
+.todo-item.todo-pending .todo-checkbox {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.5;
+}
+
+.todo-item.todo-pending .todo-text {
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.7;
+}
+
+/* Permission requests — same amber accent as tool calls */
+.message.permission-request {
+  border-left-color: var(--vscode-terminal-ansiYellow, #e5c07b);
+  padding-left: 18px;
+}
+
+.message.permission-request .message-label {
+  color: var(--vscode-terminal-ansiYellow, #e5c07b);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.permission-reason {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 4px;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Permission requests now reuse .question-option and .question-resolved
+   classes from the shared interactive card styles below. */
+
+.permission-toggle {
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.1));
+  background: transparent;
+  color: var(--vscode-descriptionForeground);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.permission-toggle:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04));
+}
+
+.permission-toggle.mode-default {
+  border-color: var(--vscode-terminal-ansiBlue, #6cb6ff);
+  color: var(--vscode-terminal-ansiBlue, #6cb6ff);
+}
+
+.permission-toggle.mode-acceptEdits {
+  border-color: var(--vscode-terminal-ansiGreen, #4d9375);
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+}
+
+.permission-toggle.mode-bypassPermissions {
+  border-color: var(--vscode-terminal-ansiRed, #e06c75);
+  color: var(--vscode-terminal-ansiRed, #e06c75);
+}
+
+/* Context window usage indicator */
+.context-usage {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.8;
+  cursor: default;
+  margin-left: 16px;
+}
+
+/* ── AskUserQuestion — interactive multiple choice ── */
+
+.message.user-question {
+  border-left-color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  padding-left: 18px;
+}
+
+.message.user-question .message-label {
+  color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.question-section {
+  margin-bottom: 12px;
+}
+
+.question-section:last-child {
+  margin-bottom: 0;
+}
+
+.question-header {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--vscode-badge-background, rgba(255,255,255,0.1));
+  color: var(--vscode-badge-foreground, var(--vscode-foreground));
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.question-text {
+  font-size: 13px;
+  color: var(--vscode-foreground);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.question-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.question-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.1));
+  background: var(--vscode-editor-background);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+
+.question-option:hover {
+  border-color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04));
+}
+
+.question-option.selected {
+  border-color: var(--vscode-terminal-ansiMagenta, #c678dd);
+  background: rgba(198, 120, 221, 0.1);
+}
+
+.question-option-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.question-option-description {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.question-custom-input {
+  width: 100%;
+  padding: 6px 10px;
+  margin-top: 4px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-input-border, rgba(255,255,255,0.1));
+  background: var(--vscode-input-background, #1e1e1e);
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: 12px;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.question-custom-input:focus {
+  border-color: var(--vscode-focusBorder, #007acc);
+}
+
+.question-submit-btn {
+  margin-top: 8px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-terminal-ansiMagenta, #c678dd);
+  background: var(--vscode-terminal-ansiMagenta, #c678dd);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.question-submit-btn:hover {
+  opacity: 0.85;
+}
+
+.question-submit-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Resolved state — only dim the question/answer sections, not the
+   children content (plan text, tool preview) or the label. */
+.question-resolved .question-section {
+  opacity: 0.5;
+}
+
+/* ESC cancel hint — subtle, bottom-left of response panels */
+.response-cancel-hint {
+  font-size: 10px;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.4;
+  margin-top: 6px;
+  user-select: none;
+}
+
+.question-answer {
+  font-size: 12px;
+  color: var(--vscode-terminal-ansiGreen, #4d9375);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ── Plan Review — cyan accent (same family as todo lists) ── */
+
+.message.plan-review {
+  border-left-color: var(--vscode-terminal-ansiCyan, #56b6c2);
+  padding-left: 18px;
+}
+
+.message.plan-review .message-label {
+  color: var(--vscode-terminal-ansiCyan, #56b6c2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+/* Plan text block — inside CollapsibleView which provides the border */
+.plan-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--vscode-foreground);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Plan review option hover uses cyan accent instead of magenta */
+.message.plan-review .question-option:hover {
+  border-color: var(--vscode-terminal-ansiCyan, #56b6c2);
+}
+
+.message.plan-review .question-option.selected {
+  border-color: var(--vscode-terminal-ansiCyan, #56b6c2);
+  background: rgba(86, 182, 194, 0.1);
+}
