@@ -157,4 +157,41 @@ describe("SessionStore", () => {
   it("getSession returns undefined for unknown ID", () => {
     expect(store.getSession("nonexistent")).toBeUndefined();
   });
+
+  it("updateSessionId does nothing for unknown ID", () => {
+    store.createSession("sess-1", "Test");
+    store.updateSessionId("nonexistent", "new-id");
+
+    // Original session untouched, no new session created
+    expect(store.getSession("sess-1")).toBeDefined();
+    expect(store.getSession("new-id")).toBeUndefined();
+    expect(store.getIndex()).toHaveLength(1);
+  });
+
+  it("deleteSession does nothing for unknown ID", () => {
+    store.createSession("sess-1", "Test");
+    store.deleteSession("nonexistent");
+
+    // Original session untouched
+    expect(store.getIndex()).toHaveLength(1);
+    expect(store.getSession("sess-1")).toBeDefined();
+  });
+
+  it("appends multiple batches and preserves order", () => {
+    store.createSession("sess-1", "Test");
+    store.appendMessages("sess-1", [
+      { role: "user", text: "first", timestamp: 1000 },
+    ]);
+    store.appendMessages("sess-1", [
+      { role: "assistant", text: "second", timestamp: 2000 },
+      { role: "user", text: "third", timestamp: 3000 },
+    ]);
+
+    const data = store.getSession("sess-1");
+    expect(data!.messages).toHaveLength(3);
+    expect(data!.messages[0].text).toBe("first");
+    expect(data!.messages[1].text).toBe("second");
+    expect(data!.messages[2].text).toBe("third");
+    expect(data!.meta.messageCount).toBe(3);
+  });
 });
