@@ -711,6 +711,18 @@ class ClaudeConversationImpl implements AgentConversation {
 
       console.log(`[Conduit] SDK query() called, model=${this.options.model ?? "default"}, streaming messages...`);
 
+      // Track the last assistant message's per-API-call usage. The SDK's
+      // cumulative modelUsage (in the result) sums ALL API calls in this
+      // query — for a long agentic turn with 20+ tool calls, the sum can
+      // far exceed the context window. We want the LAST call's usage
+      // instead, since that reflects the actual current context size.
+      let lastCallUsage: {
+        input_tokens: number;
+        output_tokens: number;
+        cache_read_input_tokens: number;
+        cache_creation_input_tokens: number;
+      } | null = null;
+
       // Stream messages from Claude as they arrive.
       // Each `msg` is one step in the conversation — Claude thinking,
       // calling a tool, or delivering the final result.
@@ -725,6 +737,19 @@ class ClaudeConversationImpl implements AgentConversation {
             // Save session_id on first response so we can resume this conversation later
             if (msg.session_id && !this._sessionId) {
               this._sessionId = msg.session_id;
+            }
+
+            // Capture per-API-call usage from the raw BetaMessage response.
+            // Each assistant message = one API call to Claude, so its usage
+            // reflects the actual context size for that specific call.
+            const usage = msg.message?.usage;
+            if (usage) {
+              lastCallUsage = {
+                input_tokens: usage.input_tokens ?? 0,
+                output_tokens: usage.output_tokens ?? 0,
+                cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
+                cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
+              };
             }
 
             const { content } = msg.message;
@@ -804,26 +829,31 @@ class ClaudeConversationImpl implements AgentConversation {
               this._sessionId = msg.session_id;
             }
 
-            // Extract context window usage from modelUsage. The SDK reports
+            // Extract context window size from modelUsage. The SDK reports
             // per-model usage (e.g. Opus for the main conversation, Haiku for
             // sub-agents). Pick the model with the most input tokens — that's the
             // primary conversation model whose context window matters to the user.
             const modelUsages = msg.modelUsage ? Object.values(msg.modelUsage) : [];
-            // Log ALL model entries so we can see what the SDK reports
             if (msg.modelUsage) {
               for (const [model, usage] of Object.entries(msg.modelUsage)) {
                 console.log(`[Conduit] modelUsage[${model}]: input=${(usage as any).inputTokens} output=${(usage as any).outputTokens} cacheRead=${(usage as any).cacheReadInputTokens} cacheCreate=${(usage as any).cacheCreationInputTokens} window=${(usage as any).contextWindow}`);
               }
             }
-            // Compare by TOTAL input tokens (including cache hits/misses).
-            // With prompt caching, inputTokens can be near-zero while cacheRead
-            // holds the bulk. All three count toward the context window limit.
             const totalInput = (u: any) =>
               (u.inputTokens ?? 0) + (u.cacheReadInputTokens ?? 0) + (u.cacheCreationInputTokens ?? 0);
             const mu = modelUsages.length > 1
               ? modelUsages.reduce((best, cur) => totalInput(cur) > totalInput(best) ? cur : best)
               : modelUsages[0];
-            console.log(`[Conduit] picked model: totalInput=${mu ? totalInput(mu) : 0} output=${mu?.outputTokens ?? 0} window=${mu?.contextWindow ?? 0}`);
+
+            // Use the LAST assistant message's per-API-call usage for the
+            // context indicator. The cumulative modelUsage sums all API calls
+            // in this query (e.g. 20+ tool-call rounds), so it can show 4M
+            // tokens when the real context is only 150K. The last call's
+            // usage reflects the actual current context window consumption.
+            const perCallUsage = lastCallUsage;
+            if (perCallUsage) {
+              console.log(`[Conduit] lastCallUsage: input=${perCallUsage.input_tokens} output=${perCallUsage.output_tokens} cacheRead=${perCallUsage.cache_read_input_tokens} cacheCreate=${perCallUsage.cache_creation_input_tokens}`);
+            }
 
             const successResult = msg.subtype === "success" ? msg.result : undefined;
             this.onMessage({
@@ -832,10 +862,12 @@ class ClaudeConversationImpl implements AgentConversation {
               duration: msg.duration_ms,
               result: successResult,
               contextWindow: mu?.contextWindow,
-              inputTokens: mu?.inputTokens,
-              outputTokens: mu?.outputTokens,
-              cacheReadTokens: mu?.cacheReadInputTokens,
-              cacheCreationTokens: mu?.cacheCreationInputTokens,
+              // Prefer per-call usage (accurate context size) over cumulative
+              // modelUsage (inflated by multiple tool-call rounds).
+              inputTokens: perCallUsage?.input_tokens ?? mu?.inputTokens,
+              outputTokens: perCallUsage?.output_tokens ?? mu?.outputTokens,
+              cacheReadTokens: perCallUsage?.cache_read_input_tokens ?? mu?.cacheReadInputTokens,
+              cacheCreationTokens: perCallUsage?.cache_creation_input_tokens ?? mu?.cacheCreationInputTokens,
             });
             break;
           }
