@@ -26,16 +26,20 @@ const COLLAPSIBLE_ROLES = new Set<string>(["user", "assistant"]);
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  /** Whether this message can be collapsed. Defaults to true.
+   *  Set to false for each turn's final assistant response. */
+  canCollapse?: boolean;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, canCollapse = true }: ChatMessageProps) {
   const label = LABELS[message.role];
   const content = <div className="message-content">{message.text}</div>;
+  const shouldCollapse = COLLAPSIBLE_ROLES.has(message.role) && canCollapse;
 
   return (
     <div className={`message ${message.role}`}>
       {label && <div className="message-label">{label}</div>}
-      {COLLAPSIBLE_ROLES.has(message.role) ? (
+      {shouldCollapse ? (
         <CollapsibleView>{content}</CollapsibleView>
       ) : (
         content
