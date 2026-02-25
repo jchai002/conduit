@@ -20,6 +20,8 @@
 </p>
 -->
 
+> **Alpha (v0.1.0)** — This project is in early alpha. It works, but expect rough edges. Bug reports and PRs are very welcome. See [Reporting Bugs](#reporting-bugs) below.
+
 ---
 
 ## The Problem
@@ -82,7 +84,31 @@ Conduit is built on two interfaces — **BusinessContextProvider** and **CodingA
 
 Adding a provider touches exactly 3 files. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Reporting Bugs
+
+This is an alpha release — if something breaks, please [open an issue](https://github.com/jchai002/conduit/issues/new). Here's a template you can copy-paste:
+
+```
+**What happened?**
+(What did you expect vs. what actually happened)
+
+**Steps to reproduce**
+1. ...
+2. ...
+
+**Environment**
+- OS:
+- VS Code version:
+- Conduit version:
+- Claude Code CLI version: (run `claude --version`)
+
+**Logs**
+(Open the Output panel → select "Conduit" from the dropdown → paste relevant lines)
+```
+
 ## Contributing
+
+This is an open-source project and contributions are welcome — whether that's bug reports, feature ideas, or PRs.
 
 The most impactful contributions are **new providers** — each one makes Conduit useful for a whole new set of teams.
 
