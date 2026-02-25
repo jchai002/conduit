@@ -29,6 +29,11 @@ src/
 ├── chat/                         # Chat panel, session storage, message protocol
 ├── webview/                      # HTML template for webview panel
 └── extension.ts                  # Entry point
+webview-ui/                       # React 19 chat UI (Vite + Tailwind)
+├── src/
+│   ├── components/               # MessageList, InputArea, tool renderers, etc.
+│   ├── context/                  # State management (useReducer)
+│   └── test/                     # Vitest + React Testing Library
 ```
 
 ## Adding a Context Provider (Slack, Teams, Outlook, Discord, etc.)
@@ -48,7 +53,7 @@ export class TeamsProvider implements BusinessContextProvider {
   readonly id = "teams";
   readonly displayName = "Microsoft Teams";
 
-  isConfigured(): boolean {
+  isConfigured(): boolean | Promise<boolean> {
     // Check if the user has set up credentials
   }
 
@@ -65,6 +70,10 @@ export class TeamsProvider implements BusinessContextProvider {
   async getThread(channelId: string, threadId: string): Promise<Thread | null> {
     // Fetch full thread, return generic Thread
   }
+
+  // Optional — implement if your platform has user/channel concepts:
+  // async resolveUser(input: string): Promise<ResolvedUser[]> { ... }
+  // async resolveChannel(input: string): Promise<ResolvedChannel[]> { ... }
 }
 ```
 
@@ -79,7 +88,7 @@ In `src/extension.ts`, add to the `activate` function:
 ```typescript
 import { TeamsProvider } from "./providers/business-context/teams/teamsProvider";
 
-registry.registerContextProvider(new TeamsProvider());
+registry.registerBusinessContext(new TeamsProvider());
 ```
 
 ### 3. Add the config enum value
@@ -138,19 +147,22 @@ export class CodexAgent implements CodingAgent {
 
 Then register it in `extension.ts` and add to the `businessContext.codingAgent` enum in `package.json`.
 
+See [docs/VISION.md](docs/VISION.md) for details on which agents are viable SDK targets vs. partially compatible.
+
 ## Code Conventions
 
 - TypeScript strict mode
 - Named exports only (no default exports)
 - Provider-specific settings: `businessContext.<provider>.*`
-- Run `npm run build` before submitting — must compile clean
+- Comment new code for a junior-to-mid level audience, the goal is to make this project as accessible as possible (see [CLAUDE.md](CLAUDE.md) for details)
+- Run `npm run build` and `npm run test:all` before submitting
 
 ## Submitting a PR
 
 1. Fork the repo
 2. Create a feature branch: `git checkout -b add-teams-provider`
 3. Make your changes (see above for what files to touch)
-4. Run `npm run build` to verify it compiles
+4. Run `npm run build` and `npm run test:all` to verify
 5. Open a PR with:
    - Which provider/agent you're adding
    - What API/SDK it uses
@@ -168,11 +180,9 @@ Then register it in `extension.ts` and add to the `businessContext.codingAgent` 
 - GitHub Issues / Discussions (GitHub API)
 
 **Coding Agents:**
-- GitHub Copilot CLI
-- Cursor
-- Aider
-- Continue
+- OpenAI Codex (closest match to current Claude SDK adapter)
+- GitHub Copilot SDK (once it exits technical preview)
+- Continue.dev CLI
 
 **Core Improvements:**
-- Inline code diff viewer with accept/reject in the webview
-- Bug reports and feature ideas via GitHub Issues
+- Bug reports and feature ideas via [GitHub Issues](https://github.com/jchai002/conduit/issues)
