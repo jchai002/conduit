@@ -597,23 +597,10 @@ class ClaudeConversationImpl implements AgentConversation {
                   input: Record<string, unknown>,
                   options: { decisionReason?: string; toolUseID: string }
                 ) => {
-                  // Emit the tool call to the webview so the user sees it.
-                  // We emit HERE instead of the streaming handler so tool calls
-                  // appear one at a time — the streaming handler would dump ALL
-                  // tool calls at once before any permission prompt is resolved.
-                  // Suppressed tools (AskUserQuestion, ExitPlanMode, etc.) have
-                  // their own custom UI messages emitted below.
-                  const suppressedTools = new Set([
-                    "AskUserQuestion", "EnterPlanMode", "ExitPlanMode", "Task",
-                  ]);
-                  if (!suppressedTools.has(toolName)) {
-                    this.onMessage({
-                      type: "sdk-tool-call",
-                      toolName,
-                      input: JSON.stringify(input, null, 2),
-                      toolCallId: options.toolUseID,
-                    });
-                  }
+                  // Tool call visibility is handled by the streaming handler
+                  // (assistant message → tool_use blocks), so we don't emit
+                  // sdk-tool-call here. This avoids duplicates since the stream
+                  // always fires before canUseTool.
 
                   // AskUserQuestion: render an interactive multiple-choice UI in
                   // the webview instead of the generic Allow/Deny permission prompt.
@@ -783,19 +770,17 @@ class ClaudeConversationImpl implements AgentConversation {
                 // JSON is noise. The todo list and results are what matter.
                 if (block.name === "Task") break;
 
-                // When canUseTool is active (default/acceptEdits), we emit
-                // sdk-tool-call from canUseTool so tool calls appear one at a
-                // time alongside their permission prompts. Emitting here would
-                // show ALL tool calls at once before any permission is resolved.
-                // In bypassPermissions mode there's no canUseTool, so emit here.
-                if (this.options.permissionMode === "bypassPermissions") {
-                  this.onMessage({
-                    type: "sdk-tool-call",
-                    toolName: block.name,
-                    input: JSON.stringify(block.input, null, 2),
-                    toolCallId: block.id,
-                  });
-                }
+                // Always emit tool calls from the stream so every tool is
+                // visible in the chat UI. The SDK auto-approves many tools
+                // (Read, Glob, Grep, our MCP tools, etc.) without calling
+                // canUseTool, so emitting only from canUseTool would leave
+                // auto-approved tools invisible.
+                this.onMessage({
+                  type: "sdk-tool-call",
+                  toolName: block.name,
+                  input: JSON.stringify(block.input, null, 2),
+                  toolCallId: block.id,
+                });
               }
             }
             break;
