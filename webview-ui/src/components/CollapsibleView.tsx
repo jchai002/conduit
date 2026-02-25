@@ -86,16 +86,26 @@ export function CollapsibleView({
         {children}
       </div>
 
-      {/* Fade gradient + expand button — only when collapsed and content overflows */}
-      {showControls && !expanded && (
+      {/* Bottom button — expand when collapsed, collapse when expanded */}
+      {showControls && (
         <div className="collapsible-fade">
-          <button
-            className="collapsible-btn collapsible-expand-btn"
-            onClick={() => setExpanded(true)}
-            title="Expand"
-          >
-            Expand ↓
-          </button>
+          {expanded ? (
+            <button
+              className="collapsible-btn collapsible-expand-btn"
+              onClick={() => setExpanded(false)}
+              title="Collapse"
+            >
+              Collapse ↑
+            </button>
+          ) : (
+            <button
+              className="collapsible-btn collapsible-expand-btn"
+              onClick={() => setExpanded(true)}
+              title="Expand"
+            >
+              Expand ↓
+            </button>
+          )}
         </div>
       )}
     </div>
