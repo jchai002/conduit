@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="media/conduit-icon.svg" width="80" alt="Conduit logo" />
+  <img src="media/conduit-icon.png" width="80" alt="Conduit logo" />
 </p>
 
 <h1 align="center">Claude Code Slack Conduit</h1>
