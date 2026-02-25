@@ -14,35 +14,15 @@
   <a href="https://github.com/jchai002/conduit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jchai002/conduit" alt="MIT License" /></a>
 </p>
 
+> **Alpha (v0.1.0)** — This project is in early alpha. It works, but expect rough edges. Bug reports and PRs are very welcome. See [Reporting Bugs](#reporting-bugs) below.
+
 <!-- TODO: Replace with actual demo GIF once recorded
 <p align="center">
   <img src="media/demo.gif" width="700" alt="Conduit demo — searching Slack and coding with context" />
 </p>
 -->
 
-> **Alpha (v0.1.0)** — This project is in early alpha. It works, but expect rough edges. Bug reports and PRs are very welcome. See [Reporting Bugs](#reporting-bugs) below.
-
 ---
-
-## The Problem
-
-Every dev team has this workflow:
-
-1. Product discussions happen in Slack
-2. Developer gets a task: "implement what we discussed"
-3. Developer spends 20 minutes searching Slack, re-reading threads
-4. Developer opens AI coding tool and manually explains the context
-5. AI implements based on incomplete understanding
-
-Steps 3–4 are pure waste. The context exists — it's just trapped in Slack.
-
-## The Solution
-
-Type naturally:
-
-> "Implement what Sarah mentioned last week about rate limiting"
-
-Conduit gives Claude Code direct access to your Slack via MCP tools. The agent searches conversations, fetches threads, and codes with full business context — no copy-pasting required.
 
 ## Features
 
@@ -72,6 +52,22 @@ You type in the chat panel
 ```
 
 Your Slack messages stay between you and Slack. Conduit searches on your behalf using your own OAuth token. Nothing leaves your machine except the normal Claude API calls.
+
+## Why
+
+Every dev team has this workflow:
+
+1. Product discussions happen in Slack
+2. Developer gets a task: "implement what we discussed"
+3. Developer spends 20 minutes searching Slack, re-reading threads
+4. Developer opens AI coding tool and manually explains the context
+5. AI implements based on incomplete understanding
+
+Steps 3–4 are pure waste. The context exists — it's just trapped in Slack. Conduit bridges the gap:
+
+> "Implement what Sarah mentioned last week about rate limiting"
+
+The agent searches conversations, fetches threads, and codes with full business context — no copy-pasting required.
 
 ## Architecture
 
