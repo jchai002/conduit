@@ -36,7 +36,7 @@ export function SetupScreen() {
     <div className="setup-screen">
       <h2 className="setup-title">Setup Required</h2>
       <p className="setup-subtitle">
-        Conduit needs the {displayName} CLI to work. Let's get you set up.
+        Tether needs the {displayName} CLI to work. Let's get you set up.
       </p>
 
       <div className="setup-steps">

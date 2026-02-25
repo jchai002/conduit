@@ -2,7 +2,7 @@
  * SyncService — periodically uploads local telemetry data to R2 via the
  * Cloudflare Worker.
  *
- * Reads new JSONL lines from ~/.conduit/telemetry/sessions.jsonl (using a
+ * Reads new JSONL lines from ~/.tether/telemetry/sessions.jsonl (using a
  * byte offset to avoid re-uploading old data) and POSTs them directly to
  * the Worker's /telemetry/upload endpoint. The Worker writes to R2.
  *
@@ -39,7 +39,7 @@ export class SyncService {
   private deviceIdPath: string;
 
   constructor(dataDir?: string) {
-    this.dataDir = dataDir ?? path.join(os.homedir(), ".conduit", "telemetry");
+    this.dataDir = dataDir ?? path.join(os.homedir(), ".tether", "telemetry");
     this.dataFilePath = path.join(this.dataDir, "sessions.jsonl");
     this.syncStatePath = path.join(this.dataDir, "sync-state.json");
     this.deviceIdPath = path.join(this.dataDir, "device-id");
@@ -67,7 +67,7 @@ export class SyncService {
     await this.syncIfEnabled();
   }
 
-  /** Manual sync trigger (for the "Conduit: Sync Now" command). */
+  /** Manual sync trigger (for the "Tether: Sync Now" command). */
   async syncNow(): Promise<void> {
     if (!this.isSyncEnabled()) {
       vscode.window.showInformationMessage(
@@ -90,7 +90,7 @@ export class SyncService {
     try {
       await this.performSync();
     } catch (err) {
-      console.error("[Conduit] Telemetry sync failed:", err);
+      console.error("[Tether] Telemetry sync failed:", err);
     }
   }
 
@@ -130,13 +130,13 @@ export class SyncService {
     try {
       deviceId = fs.readFileSync(this.deviceIdPath, "utf-8").trim();
     } catch {
-      console.error("[Conduit] No device ID found — skipping sync");
+      console.error("[Tether] No device ID found — skipping sync");
       return;
     }
 
     // Upload URL — defaults to the production Worker
     const workerUrl = vscode.workspace.getConfiguration("businessContext")
-      .get<string>("telemetry.syncUrl", "https://conduit-oauth.jchai002.workers.dev");
+      .get<string>("telemetry.syncUrl", "https://tether-oauth.jchai002.workers.dev");
 
     // POST directly to the Worker. It handles rate limiting and writes to R2.
     const response = await fetch(`${workerUrl}/telemetry/upload`, {
@@ -149,18 +149,18 @@ export class SyncService {
     });
 
     if (response.status === 429) {
-      console.log("[Conduit] Telemetry upload rate-limited — will retry next cycle");
+      console.log("[Tether] Telemetry upload rate-limited — will retry next cycle");
       return;
     }
 
     if (!response.ok) {
-      console.error(`[Conduit] Telemetry upload failed: ${response.status} ${response.statusText}`);
+      console.error(`[Tether] Telemetry upload failed: ${response.status} ${response.statusText}`);
       return;
     }
 
     // Success — advance the byte offset
     this.saveSyncState({ lastSyncByteOffset: stat.size });
-    console.log(`[Conduit] Telemetry synced: ${buffer.length} bytes uploaded`);
+    console.log(`[Tether] Telemetry synced: ${buffer.length} bytes uploaded`);
   }
 
   private loadSyncState(): SyncState {

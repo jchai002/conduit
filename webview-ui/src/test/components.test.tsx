@@ -19,8 +19,8 @@ function renderApp() {
 describe("WelcomeScreen", () => {
   it("shows welcome screen on initial render", () => {
     renderApp();
-    // "Conduit" appears in both Header <h1> and WelcomeScreen <h2>
-    const headings = screen.getAllByText("Conduit");
+    // "Tether" appears in both Header <h1> and WelcomeScreen <h2>
+    const headings = screen.getAllByText("Tether");
     expect(headings).toHaveLength(2);
     expect(screen.getByText(/Bridge business context/i)).toBeInTheDocument();
   });

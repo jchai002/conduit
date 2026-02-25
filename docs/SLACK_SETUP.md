@@ -1,6 +1,6 @@
 # Slack Setup Guide
 
-Conduit supports two ways to connect Slack:
+Tether supports two ways to connect Slack:
 
 - **OAuth (recommended)** — Click "Connect Slack" in the UI, authorize in browser, done.
 - **Manual token** — Create a user token manually and paste it into settings.
@@ -24,7 +24,7 @@ These steps are for the extension developer (you). End users only click "Connect
 
 1. Go to https://api.slack.com/apps
 2. Click **"Create New App"** → **"From scratch"**
-3. **App Name:** "Conduit" (or any name)
+3. **App Name:** "Tether" (or any name)
 4. **Workspace:** Select your test workspace
 5. Click **"Create App"**
 
@@ -33,7 +33,7 @@ These steps are for the extension developer (you). End users only click "Connect
 1. In the left sidebar, click **"OAuth & Permissions"**
 2. Under **"Redirect URLs"**, add your Worker URL:
    - Development (ngrok): `https://<ngrok-url>/slack-callback`
-   - Production: `https://conduit-oauth.<account>.workers.dev/slack-callback`
+   - Production: `https://tether-oauth.<account>.workers.dev/slack-callback`
 3. Under **"User Token Scopes"**, add:
    - `search:read` — Search messages (requires user token)
 4. Under **"Bot Token Scopes"**, add:
@@ -63,7 +63,7 @@ These steps are for the extension developer (you). End users only click "Connect
    ```bash
    cd oauth-proxy && wrangler deploy
    ```
-7. Your URL will be: `https://conduit-oauth.<account>.workers.dev`
+7. Your URL will be: `https://tether-oauth.<account>.workers.dev`
 
 ### Step 4: Configure VS Code Settings
 
@@ -72,7 +72,7 @@ Add your Slack app's client ID and Worker URL to `.vscode/settings.json`:
 ```json
 {
   "businessContext.slack.clientId": "YOUR_CLIENT_ID",
-  "businessContext.slack.oauthProxyUrl": "https://conduit-oauth.<account>.workers.dev"
+  "businessContext.slack.oauthProxyUrl": "https://tether-oauth.<account>.workers.dev"
 }
 ```
 
@@ -117,8 +117,8 @@ To let users outside your workspace connect via OAuth:
 1. In your Slack app settings, go to **"Manage Distribution"**
 2. Complete the checklist items (redirect URL, scopes, etc.)
 3. Click **"Activate Public Distribution"**
-4. Copy the **shareable install URL** — this is what Conduit uses as the OAuth authorize URL
-5. Users install by clicking "Connect Slack" in Conduit → they see the standard Slack authorize screen
+4. Copy the **shareable install URL** — this is what Tether uses as the OAuth authorize URL
+5. Users install by clicking "Connect Slack" in Tether → they see the standard Slack authorize screen
 
 Unlisted distribution (no Slack App Directory listing) requires no review. Users can install
 immediately via the direct URL. The app won't appear in Slack's marketplace search.
@@ -137,8 +137,8 @@ If you prefer not to use OAuth, you can create a user token manually:
 
 ## End User Experience (OAuth)
 
-1. User installs Conduit extension
-2. User opens Conduit chat panel
+1. User installs Tether extension
+2. User opens Tether chat panel
 3. User clicks **"Connect"** next to Slack
 4. Browser opens Slack authorization page
 5. User clicks **"Allow"**

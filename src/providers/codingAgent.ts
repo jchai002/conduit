@@ -9,7 +9,7 @@
  * - Session persistence and resume
  *
  * Each implementation wraps a specific agent's SDK or CLI (Claude, Codex, etc.)
- * and translates its streaming events into Conduit's ExtensionToWebviewMessage
+ * and translates its streaming events into Tether's ExtensionToWebviewMessage
  * protocol so chatPanel.ts stays agent-agnostic.
  *
  * Implementations live in providers/agents/<name>/.

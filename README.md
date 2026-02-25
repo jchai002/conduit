@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="media/conduit-icon.png" width="80" alt="Conduit logo" />
+  <img src="media/tether-icon.png" width="80" alt="Tether logo" />
 </p>
 
-<h1 align="center">Claude Code Slack Conduit</h1>
+<h1 align="center">Claude Code Slack Tether</h1>
 <p align="center"><strong>MCP bridge between Slack and Claude Code</strong></p>
 <p align="center">
   MCP bridge that links business conversations to AI coding agents.<br>
@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=jerrychaitea.conduit"><img src="https://img.shields.io/visual-studio-marketplace/v/jerrychaitea.conduit?label=marketplace" alt="VS Code Marketplace" /></a>
-  <a href="https://github.com/jchai002/conduit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jchai002/conduit" alt="MIT License" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=jerrychaitea.tether"><img src="https://img.shields.io/visual-studio-marketplace/v/jerrychaitea.tether?label=marketplace" alt="VS Code Marketplace" /></a>
+  <a href="https://github.com/jchai002/tether/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jchai002/tether" alt="MIT License" /></a>
 </p>
 
 ### 1. Ask naturally
@@ -20,10 +20,10 @@
   <img src="media/user_ask.png" width="600" alt="User types: can you implement what sara wanted regarding login page" />
 </p>
 
-### 2. Conduit searches Slack and resolves context
+### 2. Tether searches Slack and resolves context
 
 <p align="center">
-  <img src="media/mcp_tool_call.png" width="600" alt="Conduit resolves Sara's user ID and searches Slack for her messages" />
+  <img src="media/mcp_tool_call.png" width="600" alt="Tether resolves Sara's user ID and searches Slack for her messages" />
 </p>
 
 ### 3. Code with full business context
@@ -45,7 +45,7 @@
 
 ## Prerequisites
 
-Conduit requires [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) to be installed and authenticated. If you already have a Claude subscription (Pro, Team, or Enterprise), you're good — Conduit uses your existing subscription. No separate API key or surprise usage bill.
+Tether requires [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) to be installed and authenticated. If you already have a Claude subscription (Pro, Team, or Enterprise), you're good — Tether uses your existing subscription. No separate API key or surprise usage bill.
 
 ```bash
 npm install -g @anthropic-ai/claude-code
@@ -54,8 +54,8 @@ claude          # follow the prompts to authenticate
 
 ## Quick Start
 
-1. **Install** [Conduit](https://marketplace.visualstudio.com/items?itemName=jerrychaitea.conduit) from the VS Code Marketplace
-2. **Connect Slack** — click the Slack button in the chat panel, or run `Conduit: Configure`
+1. **Install** [Tether](https://marketplace.visualstudio.com/items?itemName=jerrychaitea.tether) from the VS Code Marketplace
+2. **Connect Slack** — click the Slack button in the chat panel, or run `Tether: Configure`
 3. **Start coding** — open the chat panel and describe what you need
 
 ## How It Works
@@ -69,7 +69,7 @@ You type in the chat panel
   → You follow up, refine, iterate
 ```
 
-Your Slack messages stay between you and Slack. Conduit searches on your behalf using your own OAuth token. Nothing leaves your machine except the normal Claude API calls.
+Your Slack messages stay between you and Slack. Tether searches on your behalf using your own OAuth token. Nothing leaves your machine except the normal Claude API calls.
 
 ## Why
 
@@ -81,7 +81,7 @@ Every dev team has this workflow:
 4. Developer opens AI coding tool and manually explains the context
 5. AI implements based on incomplete understanding
 
-Steps 3–4 are pure waste. The context exists — it's just trapped in Slack. Conduit bridges the gap:
+Steps 3–4 are pure waste. The context exists — it's just trapped in Slack. Tether bridges the gap:
 
 > "Implement what Sarah mentioned last week about rate limiting"
 
@@ -89,7 +89,7 @@ The agent searches conversations, fetches threads, and codes with full business 
 
 ## Architecture
 
-Conduit is built on two interfaces — **BusinessContextProvider** and **CodingAgent** — so anyone can plug in support for their own stack.
+Tether is built on two interfaces — **BusinessContextProvider** and **CodingAgent** — so anyone can plug in support for their own stack.
 
 | Layer | Current | Planned |
 |-------|---------|---------|
@@ -102,7 +102,7 @@ Adding a provider touches exactly 3 files. See [CONTRIBUTING.md](CONTRIBUTING.md
 
 > **Alpha (v0.1.0)** — This project is in early alpha. It works, but expect rough edges.
 
-If something breaks, please [open an issue](https://github.com/jchai002/conduit/issues/new). Here's a template you can copy-paste:
+If something breaks, please [open an issue](https://github.com/jchai002/tether/issues/new). Here's a template you can copy-paste:
 
 ```
 **What happened?**
@@ -115,18 +115,18 @@ If something breaks, please [open an issue](https://github.com/jchai002/conduit/
 **Environment**
 - OS:
 - VS Code version:
-- Conduit version:
+- Tether version:
 - Claude Code CLI version: (run `claude --version`)
 
 **Logs**
-(Open the Output panel → select "Conduit" from the dropdown → paste relevant lines)
+(Open the Output panel → select "Tether" from the dropdown → paste relevant lines)
 ```
 
 ## Contributing
 
 This is an open-source project and contributions are welcome — whether that's bug reports, feature ideas, or PRs.
 
-The most impactful contributions are **new providers** — each one makes Conduit useful for a whole new set of teams.
+The most impactful contributions are **new providers** — each one makes Tether useful for a whole new set of teams.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for a step-by-step guide, and [docs/VISION.md](docs/VISION.md) for the full roadmap.
 

@@ -1,10 +1,10 @@
-# What Conduit Collects
+# What Tether Collects
 
-Conduit logs anonymous usage data locally to improve context search quality. If you enable sharing, this data is periodically uploaded to help train better models.
+Tether logs anonymous usage data locally to improve context search quality. If you enable sharing, this data is periodically uploaded to help train better models.
 
 ## What's Included
 
-Conduit records the following locally:
+Tether records the following locally:
 
 - **AI responses** — Claude's text output (summaries, analysis, implementation plans)
 - **Tool call metadata** — which tools Claude used and what it searched for (e.g. `search_slack` with query `"rate limiting from:sarah"`)
@@ -37,21 +37,21 @@ Notice: `user_query` only has `textLength` (47 characters), not your actual mess
 All data is stored locally on your machine at:
 
 ```
-~/.conduit/telemetry/sessions.jsonl
+~/.tether/telemetry/sessions.jsonl
 ```
 
-You can inspect this file at any time with **Conduit: View Collected Data** from the command palette.
+You can inspect this file at any time with **Tether: View Collected Data** from the command palette.
 
 ## How to Control It
 
 | Setting | What it does |
 |---|---|
 | `businessContext.telemetry.enabled` | Toggle local data logging on/off (re-enable after declining) |
-| `businessContext.telemetry.syncEnabled` | Toggle uploading local data to Conduit's servers |
+| `businessContext.telemetry.syncEnabled` | Toggle uploading local data to Tether's servers |
 
 - **"No thanks" on consent prompt** — stops local logging (re-enable via the setting above)
-- **Delete your data** — run **Conduit: Delete Collected Data** from the command palette
-- **VS Code telemetry** — if you've set `telemetry.telemetryLevel` to "off", Conduit respects that and won't upload anything regardless of our setting
+- **Delete your data** — run **Tether: Delete Collected Data** from the command palette
+- **VS Code telemetry** — if you've set `telemetry.telemetryLevel` to "off", Tether respects that and won't upload anything regardless of our setting
 
 ## Why We Collect This
 

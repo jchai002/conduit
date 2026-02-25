@@ -1,5 +1,5 @@
 /** Shortens a file path for display by showing only the last 2-3 segments.
- *  e.g., "/home/user/projects/conduit/src/chat/messages.ts" → "src/chat/messages.ts" */
+ *  e.g., "/home/user/projects/tether/src/chat/messages.ts" → "src/chat/messages.ts" */
 export function shortenPath(filePath: string): string {
   // Normalize separators
   const normalized = filePath.replace(/\\/g, "/");

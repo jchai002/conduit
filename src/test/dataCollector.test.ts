@@ -19,7 +19,7 @@ function readRecords(): Record<string, unknown>[] {
 }
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "conduit-test-"));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tether-test-"));
   collector = new DataCollector(tmpDir);
 });
 

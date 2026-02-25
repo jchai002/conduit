@@ -1,10 +1,10 @@
 /**
  * DataCollector — appends telemetry events to a local JSONL file.
  *
- * This is the core of Conduit's data collection pipeline. It records
+ * This is the core of Tether's data collection pipeline. It records
  * interaction metadata (tool names, text lengths, timestamps, costs) and
  * Claude's AI outputs (response text, tool call inputs) to a single
- * append-only JSONL file at ~/.conduit/telemetry/sessions.jsonl.
+ * append-only JSONL file at ~/.tether/telemetry/sessions.jsonl.
  *
  * What's collected: Claude's responses, tool call inputs, interaction
  * metadata (tool names, text lengths, timestamps, costs, token usage).
@@ -83,7 +83,7 @@ export class DataCollector {
   private pendingSessionStart: Record<string, unknown> | null = null;
 
   /** Anonymous device ID — generated once, reused across sessions.
-   *  Stored at ~/.conduit/telemetry/device-id to persist across restarts. */
+   *  Stored at ~/.tether/telemetry/device-id to persist across restarts. */
   private deviceId: string;
 
   /** Full path to the JSONL data file. */
@@ -93,7 +93,7 @@ export class DataCollector {
 
   constructor(dataDir?: string) {
     // Resolve paths — accept an optional override for testing.
-    const resolvedDir = dataDir ?? path.join(os.homedir(), ".conduit", "telemetry");
+    const resolvedDir = dataDir ?? path.join(os.homedir(), ".tether", "telemetry");
     this.dataFilePath = path.join(resolvedDir, "sessions.jsonl");
     this.syncStatePath = path.join(resolvedDir, "sync-state.json");
 
@@ -294,7 +294,7 @@ export class DataCollector {
         if (stat.size >= MAX_DATA_FILE_BYTES) {
           fs.unlinkSync(this.dataFilePath);
           fs.writeFileSync(this.syncStatePath, JSON.stringify({ lastSyncByteOffset: 0 }), "utf-8");
-          console.log("[Conduit] Telemetry data file exceeded 1 GB — reset");
+          console.log("[Tether] Telemetry data file exceeded 1 GB — reset");
         }
       } catch {
         // File doesn't exist yet — that's fine, appendFileSync will create it.
@@ -304,7 +304,7 @@ export class DataCollector {
     } catch (err) {
       // Don't let telemetry failures crash the extension.
       // Log to console for debugging but never surface to the user.
-      console.error("[Conduit] Telemetry write failed:", err);
+      console.error("[Tether] Telemetry write failed:", err);
     }
   }
 }

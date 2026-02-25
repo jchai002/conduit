@@ -1,6 +1,6 @@
 {
-  "name": "conduit",
-  "displayName": "Claude Code Slack Conduit",
+  "name": "tether",
+  "displayName": "Claude Code Slack Tether",
   "description": "MCP bridge that links Slack business context to AI coding agents. Search conversations, fetch threads, and code with full context.",
   "keywords": [
     "claude code",
@@ -15,9 +15,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jchai002/conduit.git"
+    "url": "https://github.com/jchai002/tether.git"
   },
-  "icon": "media/conduit-icon.png",
+  "icon": "media/tether-icon.png",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -31,32 +31,32 @@
     "commands": [
       {
         "command": "businessContext.configure",
-        "title": "Conduit: Configure"
+        "title": "Tether: Configure"
       },
       {
-        "command": "conduit.openChat",
-        "title": "Conduit: Open Chat",
-        "icon": "media/conduit-icon.svg"
+        "command": "tether.openChat",
+        "title": "Tether: Open Chat",
+        "icon": "media/tether-icon.svg"
       },
       {
-        "command": "conduit.viewTelemetryData",
-        "title": "Conduit: View Collected Data"
+        "command": "tether.viewTelemetryData",
+        "title": "Tether: View Collected Data"
       },
       {
-        "command": "conduit.deleteTelemetryData",
-        "title": "Conduit: Delete Collected Data"
+        "command": "tether.deleteTelemetryData",
+        "title": "Tether: Delete Collected Data"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "conduit.openChat",
+          "command": "tether.openChat",
           "group": "navigation"
         }
       ]
     },
     "configuration": {
-      "title": "Conduit",
+      "title": "Tether",
       "properties": {
         "businessContext.contextProvider": {
           "type": "string",
@@ -93,13 +93,13 @@
         "businessContext.telemetry.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Enable local logging of anonymous usage data (AI responses + interaction metadata). Turn this on to re-enable logging if you previously declined the consent prompt. Data is stored at ~/.conduit/telemetry/sessions.jsonl.",
+          "description": "Enable local logging of anonymous usage data (AI responses + interaction metadata). Turn this on to re-enable logging if you previously declined the consent prompt. Data is stored at ~/.tether/telemetry/sessions.jsonl.",
           "order": 20
         },
         "businessContext.telemetry.syncEnabled": {
           "type": "boolean",
           "default": false,
-          "description": "Periodically upload collected telemetry to Conduit's servers for training better context search. Requires telemetry.enabled. Data is anonymous (device ID only, no email or identity).",
+          "description": "Periodically upload collected telemetry to Tether's servers for training better context search. Requires telemetry.enabled. Data is anonymous (device ID only, no email or identity).",
           "order": 21
         },
         "businessContext.maxSearchResults": {

@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker — production OAuth proxy and telemetry relay for Conduit.
+ * Cloudflare Worker — production OAuth proxy and telemetry relay for Tether.
  *
  * Handles the full Slack OAuth flow server-side so the client secret
  * never leaves the server. The flow:
@@ -8,7 +8,7 @@
  *   2. Slack redirects to: https://<worker>/slack-callback?code=xyz&state=abc
  *   3. Worker exchanges the code for a token using the client secret
  *   4. Worker stores the token in KV (keyed by state, 5-min TTL)
- *   5. Worker redirects browser to: vscode://jerrychaitea.conduit/slack-callback?state=abc
+ *   5. Worker redirects browser to: vscode://jerrychaitea.tether/slack-callback?state=abc
  *   6. VS Code extension calls: https://<worker>/exchange?state=abc
  *   7. Worker returns the token from KV and deletes it
  *
@@ -86,7 +86,7 @@ export default {
 
     // Health check
     if (url.pathname === "/") {
-      return new Response("Conduit OAuth proxy is running.", {
+      return new Response("Tether OAuth proxy is running.", {
         headers: { "Content-Type": "text/plain" },
       });
     }
@@ -158,7 +158,7 @@ async function handleSlackCallback(url, env) {
 
   // Redirect browser to VS Code's URI handler. Only pass the state —
   // the token stays server-side until the extension fetches it.
-  const vscodeUri = `vscode://jerrychaitea.conduit/slack-callback?state=${encodeURIComponent(state)}`;
+  const vscodeUri = `vscode://jerrychaitea.tether/slack-callback?state=${encodeURIComponent(state)}`;
 
   return new Response(
     `<!DOCTYPE html>

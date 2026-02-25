@@ -5,7 +5,7 @@
  * This tiny HTTP server acts as the middleman:
  *
  *   1. Slack redirects to: http://localhost:3456/slack-callback?code=xyz&state=abc
- *   2. This server redirects to: vscode://jerrychaitea.conduit/slack-callback?code=xyz&state=abc
+ *   2. This server redirects to: vscode://jerrychaitea.tether/slack-callback?code=xyz&state=abc
  *   3. VS Code catches the vscode:// URI and completes the OAuth flow
  *
  * Usage:
@@ -14,13 +14,13 @@
  *   3. Copy the ngrok HTTPS URL (e.g. https://abc123.ngrok-free.app)
  *   4. Add that URL as the Slack OAuth redirect: https://abc123.ngrok-free.app/slack-callback
  *   5. Set businessContext.slack.oauthProxyUrl in VS Code settings to the ngrok URL
- *   6. Click "Connect Slack" in Conduit — the flow goes through ngrok → this server → VS Code
+ *   6. Click "Connect Slack" in Tether — the flow goes through ngrok → this server → VS Code
  */
 
 const http = require("http");
 
 const PORT = 3456;
-const VSCODE_URI_BASE = "vscode://jerrychaitea.conduit/slack-callback";
+const VSCODE_URI_BASE = "vscode://jerrychaitea.tether/slack-callback";
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -70,7 +70,7 @@ const server = http.createServer((req, res) => {
   // Health check / root
   if (url.pathname === "/") {
     res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Conduit OAuth proxy is running. Waiting for Slack callback...");
+    res.end("Tether OAuth proxy is running. Waiting for Slack callback...");
     return;
   }
 

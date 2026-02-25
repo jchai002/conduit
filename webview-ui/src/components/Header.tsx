@@ -57,7 +57,7 @@ export function Header() {
 
   return (
     <div id="header">
-      <h1>Conduit</h1>
+      <h1>Tether</h1>
       <span className="subtitle">Business context for AI coding</span>
       <div className="header-actions">
         <div className="session-dropdown-wrapper" ref={dropdownRef}>

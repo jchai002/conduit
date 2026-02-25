@@ -15,7 +15,7 @@ describe("shortenPath", () => {
   });
 
   it("shortens long paths to last 3 segments with ... prefix", () => {
-    expect(shortenPath("/home/user/projects/conduit/src/chat/messages.ts")).toBe(
+    expect(shortenPath("/home/user/projects/tether/src/chat/messages.ts")).toBe(
       ".../src/chat/messages.ts"
     );
   });

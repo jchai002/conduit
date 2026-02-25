@@ -54,7 +54,7 @@ function readSyncState(): { lastSyncByteOffset: number } {
 }
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "conduit-sync-test-"));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tether-sync-test-"));
   dataFilePath = path.join(tmpDir, "sessions.jsonl");
   syncStatePath = path.join(tmpDir, "sync-state.json");
   deviceIdPath = path.join(tmpDir, "device-id");

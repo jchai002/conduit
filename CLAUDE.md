@@ -1,4 +1,4 @@
-# CLAUDE.md — Conduit
+# CLAUDE.md — Tether
 
 ## Build & Run
 

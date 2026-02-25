@@ -58,11 +58,11 @@ function getLoginShellPath(): string | undefined {
     // -lic = login + interactive + command. Interactive is needed because
     // .bashrc/.zshrc often guard against non-interactive shells.
     // Use a marker prefix so we can parse the PATH from noisy shell output.
-    const result = execSync(`${shell} -lic 'echo __CONDUIT_PATH__=$PATH'`, {
+    const result = execSync(`${shell} -lic 'echo __TETHER_PATH__=$PATH'`, {
       encoding: "utf-8",
       timeout: 5000,
     });
-    const match = result.match(/__CONDUIT_PATH__=(.+)/);
+    const match = result.match(/__TETHER_PATH__=(.+)/);
     cachedLoginShellPath = match?.[1]?.trim();
     return cachedLoginShellPath;
   } catch {
@@ -211,9 +211,9 @@ export class ClaudeSDKAgent implements CodingAgent {
       ]);
       abortController.abort();
 
-      console.log(`[Conduit] Fetched ${sdkModels.length} models from SDK`);
+      console.log(`[Tether] Fetched ${sdkModels.length} models from SDK`);
 
-      // Map SDK ModelInfo → Conduit ModelOption
+      // Map SDK ModelInfo → Tether ModelOption
       this.cachedModels = sdkModels.map((m) => ({
         id: m.value,
         label: m.displayName,
@@ -221,7 +221,7 @@ export class ClaudeSDKAgent implements CodingAgent {
       }));
       return this.cachedModels;
     } catch (err) {
-      console.error("[Conduit] Failed to fetch models from SDK:", err);
+      console.error("[Tether] Failed to fetch models from SDK:", err);
       return [];
     }
   }
@@ -368,7 +368,7 @@ export class ClaudeSDKAgent implements CodingAgent {
     const resolveUserTool = createResolveUserTool(provider);
     const resolveChannelTool = createResolveChannelTool(provider);
     this.cachedMcpServer = createSdkMcpServer({
-      name: "conduit-context",
+      name: "tether-context",
       tools: [searchTool, getThreadTool, resolveUserTool, resolveChannelTool],
     });
     this.cachedProviderId = provider.id;
@@ -567,7 +567,7 @@ class ClaudeConversationImpl implements AgentConversation {
           cwd: this.options.workingDirectory,
           // MCP server is always available — the system prompt tells Claude
           // to only use context tools when the user references discussions/people.
-          mcpServers: { "conduit-context": this.agent.getMcpServer(this.options.provider) },
+          mcpServers: { "tether-context": this.agent.getMcpServer(this.options.provider) },
           systemPrompt: {
             type: "preset",
             preset: "claude_code",
@@ -577,10 +577,10 @@ class ClaudeConversationImpl implements AgentConversation {
           // Our MCP tools are safe (read-only search), so no need to prompt.
           // Format: "mcp__<server-name>__<tool-name>"
           allowedTools: [
-            `mcp__conduit-context__${toolNames.search}`,
-            `mcp__conduit-context__${toolNames.getThread}`,
-            `mcp__conduit-context__${toolNames.resolveUser}`,
-            `mcp__conduit-context__${toolNames.resolveChannel}`,
+            `mcp__tether-context__${toolNames.search}`,
+            `mcp__tether-context__${toolNames.getThread}`,
+            `mcp__tether-context__${toolNames.resolveUser}`,
+            `mcp__tether-context__${toolNames.resolveChannel}`,
           ],
           abortController: this.abortController,
           permissionMode: this.options.permissionMode ?? "default",
@@ -698,7 +698,7 @@ class ClaudeConversationImpl implements AgentConversation {
         },
       });
 
-      console.log(`[Conduit] SDK query() called, model=${this.options.model ?? "default"}, streaming messages...`);
+      console.log(`[Tether] SDK query() called, model=${this.options.model ?? "default"}, streaming messages...`);
 
       // Track the last assistant message's per-API-call usage. The SDK's
       // cumulative modelUsage (in the result) sums ALL API calls in this
@@ -716,7 +716,7 @@ class ClaudeConversationImpl implements AgentConversation {
       // Each `msg` is one step in the conversation — Claude thinking,
       // calling a tool, or delivering the final result.
       for await (const msg of q) {
-        console.log("[Conduit] SDK message:", msg.type);
+        console.log("[Tether] SDK message:", msg.type);
         if (this.abortController?.signal.aborted) break;
 
         switch (msg.type) {
@@ -731,7 +731,7 @@ class ClaudeConversationImpl implements AgentConversation {
             // The SDK provides a typed error field on assistant messages —
             // use it to detect auth failures instead of brittle text matching.
             if (msg.error === "authentication_failed") {
-              console.log("[Conduit] SDK typed auth error: authentication_failed");
+              console.log("[Tether] SDK typed auth error: authentication_failed");
               this.onMessage({ type: "sdk-auth-error" });
             }
 
@@ -830,7 +830,7 @@ class ClaudeConversationImpl implements AgentConversation {
             const modelUsages = msg.modelUsage ? Object.values(msg.modelUsage) : [];
             if (msg.modelUsage) {
               for (const [model, usage] of Object.entries(msg.modelUsage)) {
-                console.log(`[Conduit] modelUsage[${model}]: input=${(usage as any).inputTokens} output=${(usage as any).outputTokens} cacheRead=${(usage as any).cacheReadInputTokens} cacheCreate=${(usage as any).cacheCreationInputTokens} window=${(usage as any).contextWindow}`);
+                console.log(`[Tether] modelUsage[${model}]: input=${(usage as any).inputTokens} output=${(usage as any).outputTokens} cacheRead=${(usage as any).cacheReadInputTokens} cacheCreate=${(usage as any).cacheCreationInputTokens} window=${(usage as any).contextWindow}`);
               }
             }
             const totalInput = (u: any) =>
@@ -846,7 +846,7 @@ class ClaudeConversationImpl implements AgentConversation {
             // usage reflects the actual current context window consumption.
             const perCallUsage = lastCallUsage;
             if (perCallUsage) {
-              console.log(`[Conduit] lastCallUsage: input=${perCallUsage.input_tokens} output=${perCallUsage.output_tokens} cacheRead=${perCallUsage.cache_read_input_tokens} cacheCreate=${perCallUsage.cache_creation_input_tokens}`);
+              console.log(`[Tether] lastCallUsage: input=${perCallUsage.input_tokens} output=${perCallUsage.output_tokens} cacheRead=${perCallUsage.cache_read_input_tokens} cacheCreate=${perCallUsage.cache_creation_input_tokens}`);
             }
 
             const successResult = msg.subtype === "success" ? msg.result : undefined;
@@ -893,7 +893,7 @@ class ClaudeConversationImpl implements AgentConversation {
           // guessing from text content.
           case "auth_status": {
             const authMsg = msg as any;
-            console.log(`[Conduit] auth_status: isAuthenticating=${authMsg.isAuthenticating} error=${authMsg.error}`);
+            console.log(`[Tether] auth_status: isAuthenticating=${authMsg.isAuthenticating} error=${authMsg.error}`);
             if (authMsg.error) {
               this.onMessage({ type: "sdk-auth-error" });
             }
@@ -902,7 +902,7 @@ class ClaudeConversationImpl implements AgentConversation {
         }
       }
     } catch (err: any) {
-      console.error("[Conduit] SDK sendQuery error:", err.name, err.message, err);
+      console.error("[Tether] SDK sendQuery error:", err.name, err.message, err);
       // Suppress errors from intentional cancellation — the CLI subprocess
       // may throw a plain Error (not AbortError) when killed by abort signal.
       if (err.name !== "AbortError" && !this._cancelled) {

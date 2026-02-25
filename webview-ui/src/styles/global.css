@@ -1,5 +1,5 @@
 /**
- * Main CSS entry point for the Conduit webview.
+ * Main CSS entry point for the Tether webview.
  *
  * Split into logical partials — Vite bundles CSS @imports natively.
  * Uses VS Code CSS custom properties (--vscode-*) for theme integration.

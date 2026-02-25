@@ -1,12 +1,12 @@
 # Contributing
 
-Thanks for your interest in Conduit. This guide covers the most impactful way to contribute: **adding new providers**.
+Thanks for your interest in Tether. This guide covers the most impactful way to contribute: **adding new providers**.
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/jchai002/conduit.git
-cd conduit
+git clone https://github.com/jchai002/tether.git
+cd tether
 npm install
 npm run build
 ```
@@ -185,4 +185,4 @@ See [docs/VISION.md](docs/VISION.md) for details on which agents are viable SDK 
 - Continue.dev CLI
 
 **Core Improvements:**
-- Bug reports and feature ideas via [GitHub Issues](https://github.com/jchai002/conduit/issues)
+- Bug reports and feature ideas via [GitHub Issues](https://github.com/jchai002/tether/issues)

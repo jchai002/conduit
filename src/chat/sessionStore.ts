@@ -43,8 +43,8 @@ export interface Memento {
   update(key: string, value: unknown): Thenable<void>;
 }
 
-const INDEX_KEY = "conduit.sessionIndex";
-const SESSION_KEY_PREFIX = "conduit.session.";
+const INDEX_KEY = "tether.sessionIndex";
+const SESSION_KEY_PREFIX = "tether.session.";
 const MAX_SESSIONS = 50;
 
 export class SessionStore {

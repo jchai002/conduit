@@ -7,7 +7,7 @@
  *
  * "Enable" → turns on S3 sync (local logging is already active by default).
  * "No thanks" → stops local logging permanently via DataCollector.disable().
- * Timeout/X close → re-shows next time they open Conduit (once per session).
+ * Timeout/X close → re-shows next time they open Tether (once per session).
  *
  * Also respects VS Code's global telemetry setting — if telemetry.telemetryLevel
  * is "off", sync is force-disabled regardless of our own setting.
@@ -16,11 +16,11 @@ import * as vscode from "vscode";
 import { DataCollector } from "./dataCollector";
 
 /** Key used in globalState to track whether the consent prompt was explicitly dismissed. */
-const DISMISSED_KEY = "conduit.telemetry.dismissed";
+const DISMISSED_KEY = "tether.telemetry.dismissed";
 
 export class ConsentManager {
   /** In-memory flag — ensures the prompt shows at most once per session
-   *  (session = one VS Code window lifetime / Conduit webview open). */
+   *  (session = one VS Code window lifetime / Tether webview open). */
   private promptShownThisSession = false;
 
   /** Random message count threshold (1–3) before showing the prompt.
@@ -61,7 +61,7 @@ export class ConsentManager {
     if (this.context.globalState.get<boolean>(DISMISSED_KEY)) return;
 
     // Wait until the random threshold is reached so the user
-    // sees Conduit's value before being asked about data collection.
+    // sees Tether's value before being asked about data collection.
     this.messageCount++;
     if (this.messageCount < this.triggerAfterMessages) return;
 
@@ -74,7 +74,7 @@ export class ConsentManager {
    *  user can still Enable or dismiss after reading the telemetry doc. */
   private async showPrompt(): Promise<void> {
     const choice = await vscode.window.showInformationMessage(
-      "Help improve Conduit? We'd collect anonymous usage patterns and AI responses " +
+      "Help improve Tether? We'd collect anonymous usage patterns and AI responses " +
       "to train better context search. Never your Slack messages.",
       "Enable",
       "What's collected?",

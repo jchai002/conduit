@@ -38,14 +38,14 @@ export function activate(context: vscode.ExtensionContext) {
   // DataCollector logs locally by default. If the user previously clicked
   // "No thanks", disable logging on startup (they can re-enable via settings).
   const dataCollector = new DataCollector();
-  if (context.globalState.get<boolean>("conduit.telemetry.dismissed")) {
+  if (context.globalState.get<boolean>("tether.telemetry.dismissed")) {
     // User previously clicked "No thanks" — but check if they manually
     // re-enabled via settings since then (the config listener only fires
     // on changes, not on startup).
     const manuallyEnabled = vscode.workspace.getConfiguration("businessContext")
       .get<boolean>("telemetry.enabled", false);
     if (manuallyEnabled) {
-      context.globalState.update("conduit.telemetry.dismissed", undefined);
+      context.globalState.update("tether.telemetry.dismissed", undefined);
     } else {
       dataCollector.disable();
     }
@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
           .get<boolean>("telemetry.enabled", false);
         if (enabled) {
           dataCollector.enable();
-          context.globalState.update("conduit.telemetry.dismissed", undefined);
+          context.globalState.update("tether.telemetry.dismissed", undefined);
         }
       }
     })
@@ -95,14 +95,14 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register command to open chat panel as editor tab
   context.subscriptions.push(
-    vscode.commands.registerCommand("conduit.openChat", () => {
+    vscode.commands.registerCommand("tether.openChat", () => {
       ChatPanel.open(context, registry, getConfig, dataCollector, consentManager);
     })
   );
 
   // Transparency commands — let users inspect and delete collected telemetry data
   context.subscriptions.push(
-    vscode.commands.registerCommand("conduit.viewTelemetryData", async () => {
+    vscode.commands.registerCommand("tether.viewTelemetryData", async () => {
       const filePath = dataCollector.getDataFilePath();
       try {
         const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
@@ -114,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("conduit.deleteTelemetryData", async () => {
+    vscode.commands.registerCommand("tether.deleteTelemetryData", async () => {
       const confirm = await vscode.window.showWarningMessage(
         "Delete all collected telemetry data? This cannot be undone.",
         { modal: true },

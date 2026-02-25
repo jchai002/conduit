@@ -1,5 +1,5 @@
 {
-  "name": "conduit-webview",
+  "name": "tether-webview",
   "private": true,
   "type": "module",
   "scripts": {

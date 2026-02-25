@@ -10,9 +10,9 @@ import { useState, useEffect, useRef } from "react";
 import { useExtensionState } from "../context/ExtensionStateContext";
 
 /** Fun gerund words that cycle while the agent works.
- *  Mix of conduit-themed and whimsical — keeps the UI feeling alive. */
+ *  Mix of tether-themed and whimsical — keeps the UI feeling alive. */
 const STATUS_WORDS = [
-  "Conduiting...",
+  "Tethering...",
   "Thinking...",
   "Pondering...",
   "Tinkering...",

@@ -2,7 +2,7 @@
 
 ## 0.1.0 — Alpha Release
 
-First public release of Conduit.
+First public release of Tether.
 
 ### Features
 

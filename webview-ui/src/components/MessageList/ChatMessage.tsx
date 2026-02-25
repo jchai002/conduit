@@ -3,7 +3,7 @@
  *
  * Each role gets a unique CSS class for border color and label styling:
  * - user: blue border, "you" label
- * - assistant: magenta border, "conduit" label
+ * - assistant: magenta border, "tether" label
  * - error: red border, "error" label
  * - info: blue border, "info" label (dimmed)
  * - log: transparent border, no label (monospace, dimmed)
@@ -15,7 +15,7 @@ import { Markdown } from "../Markdown";
 
 const LABELS: Record<ChatMessageType["role"], string> = {
   user: "you",
-  assistant: "conduit",
+  assistant: "tether",
   error: "error",
   info: "info",
   log: "",

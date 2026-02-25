@@ -5,13 +5,13 @@ import { BusinessContextProvider } from "../../businessContextProvider";
 import { Message, Thread, SearchOptions, ResolvedUser, ResolvedChannel } from "../../types";
 import { SlackCache, SlackUser, SlackChannel } from "./slackCache";
 
-/** Conduit's unlisted Slack app client ID. Public value — not a secret.
+/** Tether's unlisted Slack app client ID. Public value — not a secret.
  *  The client secret lives on the Cloudflare Worker (set via wrangler secret). */
 const SLACK_CLIENT_ID = "10488515408532.10496099125142";
 
-/** Conduit's OAuth proxy URL. Handles the Slack token exchange server-side
+/** Tether's OAuth proxy URL. Handles the Slack token exchange server-side
  *  so the client secret never touches the extension. */
-const OAUTH_PROXY_URL = "https://conduit-oauth.jchai002.workers.dev";
+const OAUTH_PROXY_URL = "https://tether-oauth.jchai002.workers.dev";
 
 export class SlackProvider implements BusinessContextProvider {
   readonly id = "slack";
@@ -101,7 +101,7 @@ export class SlackProvider implements BusinessContextProvider {
    * Gets the OAuth redirect URI. Uses the HTTPS proxy URL if configured
    * (required by Slack — they don't accept vscode:// URIs). The proxy
    * receives the OAuth callback from Slack, then redirects the browser
-   * to vscode://jerrychaitea.conduit/slack-callback?code=...&state=...
+   * to vscode://jerrychaitea.tether/slack-callback?code=...&state=...
    * which VS Code's URI handler catches.
    */
   private getOAuthRedirectUri(): string {

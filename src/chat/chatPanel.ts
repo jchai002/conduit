@@ -32,12 +32,12 @@ export interface ChatPanelConfig {
   maxThreadMessages: number;
 }
 
-/** Debug output channel — visible in Output panel > "Conduit Debug" even without
+/** Debug output channel — visible in Output panel > "Tether Debug" even without
  *  a debugger attached (Ctrl+F5). Created lazily on first use. */
 let debugChannel: vscode.OutputChannel | null = null;
 function debug(msg: string) {
   if (!debugChannel) {
-    debugChannel = vscode.window.createOutputChannel("Conduit Debug");
+    debugChannel = vscode.window.createOutputChannel("Tether Debug");
   }
   debugChannel.appendLine(`[${new Date().toISOString()}] ${msg}`);
   debugChannel.show(true); // true = preserve focus on editor
@@ -98,8 +98,8 @@ export class ChatPanel {
 
     const extensionUri = context.extensionUri;
     const panel = vscode.window.createWebviewPanel(
-      "conduit.chat",
-      "Conduit",
+      "tether.chat",
+      "Tether",
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -108,7 +108,7 @@ export class ChatPanel {
       }
     );
 
-    panel.iconPath = vscode.Uri.joinPath(extensionUri, "media", "conduit-icon.svg");
+    panel.iconPath = vscode.Uri.joinPath(extensionUri, "media", "tether-icon.svg");
     ChatPanel.instance = new ChatPanel(panel, extensionUri, context, registry, getConfig, dataCollector, consentManager);
   }
 
@@ -259,7 +259,7 @@ export class ChatPanel {
       return;
     }
     if (!await provider.isConfigured()) {
-      this.post({ type: "error", text: `${provider.displayName} is not configured. Run "Conduit: Configure" from the command palette.` });
+      this.post({ type: "error", text: `${provider.displayName} is not configured. Run "Tether: Configure" from the command palette.` });
       return;
     }
 
@@ -547,7 +547,7 @@ export class ChatPanel {
    *  error (content filter, CLI crash, etc.). Uses the same session ID so the
    *  CLI can resume cleanly — it skips the failed turn on next resume.
    *  Without this, the stale conversation object would keep failing on follow-ups
-   *  until Conduit is restarted. */
+   *  until Tetheris restarted. */
   private recreateConversationAfterError(): void {
     const sessionId = this.conversation?.sessionId;
     this.conversation = null;
