@@ -1,50 +1,93 @@
-# Conduit
+<p align="center">
+  <img src="media/conduit-icon.svg" width="80" alt="Conduit logo" />
+</p>
 
-A VS Code extension that gives AI coding tools direct access to your team's business communication — Slack, Teams, Jira, and more.
+<h1 align="center">Conduit</h1>
+<p align="center"><strong>Slack context for Claude Code</strong></p>
+<p align="center">
+  MCP bridge that links business conversations to AI coding agents.<br>
+  Search Slack, fetch threads, and code with full context — all from VS Code.
+</p>
 
-## What it does
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=jerrychaitea.conduit"><img src="https://img.shields.io/visual-studio-marketplace/v/jerrychaitea.conduit?label=marketplace" alt="VS Code Marketplace" /></a>
+  <a href="https://github.com/jchai002/conduit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jchai002/conduit" alt="MIT License" /></a>
+</p>
 
-Developers receive vague requests like "implement what Sarah mentioned last week" but lack the business context. Conduit connects your communication platforms to your AI coding tool via MCP (Model Context Protocol), so the AI agent can search messages and fetch threads on its own — pulling exactly the context it needs, when it needs it.
+<!-- TODO: Replace with actual demo GIF once recorded
+<p align="center">
+  <img src="media/demo.gif" width="700" alt="Conduit demo — searching Slack and coding with context" />
+</p>
+-->
 
-Type naturally in the chat panel:
+---
+
+## The Problem
+
+Every dev team has this workflow:
+
+1. Product discussions happen in Slack
+2. Developer gets a task: "implement what we discussed"
+3. Developer spends 20 minutes searching Slack, re-reading threads
+4. Developer opens AI coding tool and manually explains the context
+5. AI implements based on incomplete understanding
+
+Steps 3–4 are pure waste. The context exists — it's just trapped in Slack.
+
+## The Solution
+
+Type naturally:
 
 > "Implement what Sarah mentioned last week about rate limiting"
 
-The AI agent searches your Slack (or other connected platform), reads the relevant threads, and starts coding with full context.
+Conduit gives Claude Code direct access to your Slack via MCP tools. The agent searches conversations, fetches threads, and codes with full business context — no copy-pasting required.
+
+## Features
+
+- **Slack search & threads** — Claude searches your Slack and reads threads on its own
+- **In-process MCP** — no separate server to run; tools are built into the extension
+- **Multi-turn conversations** — ask follow-ups, refine the implementation naturally
+- **Session persistence** — conversations survive VS Code restarts
+- **Permission control** — Ask / Auto-edit / YOLO modes
+- **One-click Slack connect** — OAuth flow, no manual token wrangling
 
 ## Quick Start
 
-1. Install the extension
-2. Install [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`npm install -g @anthropic-ai/claude-code`)
-3. Configure your Slack token: `Conduit: Configure`
-4. Open the chat panel and start typing
+1. **Install** [Conduit](https://marketplace.visualstudio.com/items?itemName=jerrychaitea.conduit) from the VS Code Marketplace
+2. **Install** [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code): `npm install -g @anthropic-ai/claude-code`
+3. **Connect Slack** — click the Slack button in the chat panel, or run `Conduit: Configure`
+4. **Start coding** — open the chat panel and describe what you need
 
-## How it works
+## How It Works
 
-Conduit runs a conversational chat panel inside VS Code. When you type a query, the Claude Agent SDK starts a multi-turn conversation with MCP tools for searching your business communication. The agent decides when to search, what threads to pull, and how to use the context — all within a natural conversation where you can ask follow-ups.
+```
+You type in the chat panel
+  → Claude Agent SDK starts a conversation
+  → Claude calls MCP tools as needed (search_slack, get_slack_thread)
+  → MCP tools query your Slack using your own token
+  → Claude codes with full business context
+  → You follow up, refine, iterate
+```
 
-Sessions persist across restarts. Your most recent conversation loads automatically when you open the panel.
+Your Slack messages stay between you and Slack. Conduit searches on your behalf using your own OAuth token. Nothing leaves your machine except the normal Claude API calls.
 
-### Two-path architecture
+## Architecture
 
-- **SDK path** (recommended): Uses the Claude Agent SDK with in-process MCP. Multi-turn, conversational, the agent searches on its own.
-- **Pipeline path** (fallback): For coding tools without MCP support. One-shot: search → build prompt → execute.
+Conduit is built on two interfaces — **BusinessContextProvider** and **CodingAgent** — so anyone can plug in support for their own stack.
 
-## Supported Platforms
+| Layer | Current | Planned |
+|-------|---------|---------|
+| Context | Slack | Teams, Jira, Outlook, Discord |
+| Agent | Claude Code (Agent SDK) | OpenAI Codex, Copilot SDK |
 
-**Context Providers:**
-- Slack (via User OAuth Token)
-- More coming — see [CONTRIBUTING.md](CONTRIBUTING.md)
-
-**Coding Agents:**
-- Claude Code (via Claude Agent SDK — recommended)
-- Claude Code (CLI subprocess — fallback)
-- More coming — see [CONTRIBUTING.md](CONTRIBUTING.md)
+Adding a provider touches exactly 3 files. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing
 
-Conduit is built on a provider architecture that makes adding new platforms straightforward. See [CONTRIBUTING.md](CONTRIBUTING.md) for a step-by-step guide.
+The most impactful contributions are **new providers** — each one makes Conduit useful for a whole new set of teams.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for a step-by-step guide, and [docs/VISION.md](docs/VISION.md) for the full roadmap.
 
 ## License
 
-MIT
+[MIT](LICENSE)

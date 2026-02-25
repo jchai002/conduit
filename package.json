@@ -1,7 +1,14 @@
 {
   "name": "conduit",
-  "displayName": "Conduit",
-  "description": "A business context tool that bridges the gap between LLM coding tools and business communication tools",
+  "displayName": "Conduit — Slack Context for Claude Code",
+  "description": "MCP bridge that links Slack business context to AI coding agents. Search conversations, fetch threads, and code with full context.",
+  "keywords": [
+    "claude code",
+    "slack",
+    "mcp",
+    "business context",
+    "ai coding"
+  ],
   "version": "0.1.0",
   "publisher": "jerrychaitea",
   "type": "module",
