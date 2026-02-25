@@ -170,20 +170,21 @@
   opacity: 0.85;
 }
 
-/* Secondary action button (Check Again) — ghost style */
+/* Check Again button — same orange as Open Terminal */
 .setup-check-btn {
   padding: 6px 16px;
   border-radius: 4px;
-  border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.15));
-  background: transparent;
-  color: var(--vscode-foreground);
+  border: 1px solid #e8875a;
+  background: #e8875a;
+  color: #fff;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: opacity 0.15s;
 }
 
 .setup-check-btn:hover {
-  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.04));
+  opacity: 0.85;
 }
 
 /* ── Provider Connection ─────────────────────────────────── */
