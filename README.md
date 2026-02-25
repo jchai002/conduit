@@ -56,6 +56,7 @@ claude          # follow the prompts to authenticate
 
 1. **Install** [Tether](https://marketplace.visualstudio.com/items?itemName=jerrychaitea.tether) from the VS Code Marketplace
 2. **Connect Slack** — click the Slack button in the chat panel, or run `Tether: Configure`
+   > **Note:** Slack will show a warning that this app is "not approved" or "not distributed" — this is expected. Tether's Slack app is unpublished (Slack's review process requires resources we don't have at the alpha stage). The app is open-source, requests only read permissions, and your token stays on your machine. You can review the full OAuth flow in [oauth-proxy/](oauth-proxy/).
 3. **Start coding** — open the chat panel and describe what you need
 
 ## How It Works
