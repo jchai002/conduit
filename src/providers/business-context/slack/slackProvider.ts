@@ -3,15 +3,31 @@ import * as crypto from "crypto";
 import { WebClient } from "@slack/web-api";
 import { BusinessContextProvider } from "../../businessContextProvider";
 import { Message, Thread, SearchOptions, ResolvedUser, ResolvedChannel } from "../../types";
-import { SlackCache, SlackUser, SlackChannel } from "./slackCache";
+import { SlackCache } from "./slackCache";
 
-/** Tether's unlisted Slack app client ID. Public value — not a secret.
- *  The client secret lives on the Cloudflare Worker (set via wrangler secret). */
-const SLACK_CLIENT_ID = "10488515408532.10496099125142";
+/** Default Slack app client ID (Tether's unlisted app). Public value — not a secret.
+ *  The client secret lives on the Cloudflare Worker (set via wrangler secret).
+ *  Orgs can override this via businessContext.slack.clientId to use their own Slack app. */
+const DEFAULT_SLACK_CLIENT_ID = "10488515408532.10496099125142";
 
-/** Tether's OAuth proxy URL. Handles the Slack token exchange server-side
- *  so the client secret never touches the extension. */
-const OAUTH_PROXY_URL = "https://tether-oauth.jchai002.workers.dev";
+/** Default OAuth proxy URL (Tether's Cloudflare Worker). Handles the Slack token
+ *  exchange server-side so the client secret never touches the extension.
+ *  Orgs can override this via businessContext.slack.oauthProxyUrl to use their own proxy. */
+const DEFAULT_OAUTH_PROXY_URL = "https://tether-oauth.jchai002.workers.dev";
+
+/** Reads the Slack client ID from settings, falling back to Tether's default app. */
+function getSlackClientId(): string {
+  const custom = vscode.workspace.getConfiguration("businessContext")
+    .get<string>("slack.clientId", "");
+  return custom || DEFAULT_SLACK_CLIENT_ID;
+}
+
+/** Reads the OAuth proxy URL from settings, falling back to Tether's default Worker. */
+function getOAuthProxyUrl(): string {
+  const custom = vscode.workspace.getConfiguration("businessContext")
+    .get<string>("slack.oauthProxyUrl", "");
+  return custom || DEFAULT_OAUTH_PROXY_URL;
+}
 
 export class SlackProvider implements BusinessContextProvider {
   readonly id = "slack";
@@ -105,7 +121,7 @@ export class SlackProvider implements BusinessContextProvider {
    * which VS Code's URI handler catches.
    */
   private getOAuthRedirectUri(): string {
-    return `${OAUTH_PROXY_URL}/slack-callback`;
+    return `${getOAuthProxyUrl()}/slack-callback`;
   }
 
   /**
@@ -113,7 +129,7 @@ export class SlackProvider implements BusinessContextProvider {
    * Generates a random state nonce for CSRF protection.
    */
   async initiateOAuth(context: vscode.ExtensionContext): Promise<void> {
-    const clientId = SLACK_CLIENT_ID;
+    const clientId = getSlackClientId();
 
     const redirectUri = this.getOAuthRedirectUri();
 
@@ -162,7 +178,7 @@ export class SlackProvider implements BusinessContextProvider {
    */
   async handleOAuthCallback(state: string): Promise<void> {
     // Fetch token from the worker's /exchange endpoint.
-    const exchangeUrl = `${OAUTH_PROXY_URL}/exchange?state=${encodeURIComponent(state)}`;
+    const exchangeUrl = `${getOAuthProxyUrl()}/exchange?state=${encodeURIComponent(state)}`;
     const response = await fetch(exchangeUrl);
     const data = (await response.json()) as { ok: boolean; error?: string; userToken?: string; teamName?: string };
 

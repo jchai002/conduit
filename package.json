@@ -90,6 +90,18 @@
           "description": "Slack User OAuth Token (xoxp-...). Required when using Slack as context provider.",
           "order": 10
         },
+        "businessContext.slack.clientId": {
+          "type": "string",
+          "default": "",
+          "description": "Custom Slack app client ID. Leave empty to use Tether's default app. Set this if your org requires a self-hosted Slack app.",
+          "order": 11
+        },
+        "businessContext.slack.oauthProxyUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Custom OAuth proxy URL for Slack token exchange. Leave empty to use Tether's default proxy. Must be set alongside a custom clientId.",
+          "order": 12
+        },
         "businessContext.telemetry.enabled": {
           "type": "boolean",
           "default": false,

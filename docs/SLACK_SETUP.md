@@ -1,52 +1,61 @@
-# Slack Setup Guide
+# Self-Hosted Slack App Setup
 
-Tether supports two ways to connect Slack:
+By default, Tether ships with a pre-configured Slack app so users can connect with a single click — no Slack app creation, no Worker deployment, no configuration. If your organization doesn't allow unlisted third-party Slack apps, you can create your own Slack app and point Tether at it using the steps below.
 
-- **OAuth (recommended)** — Click "Connect Slack" in the UI, authorize in browser, done.
-- **Manual token** — Create a user token manually and paste it into settings.
+This guide walks through creating a Slack app, deploying the OAuth proxy, and configuring Tether to use them.
 
-## How OAuth Works
+## Overview
 
-The client secret never touches the extension. The flow:
+Tether's OAuth flow has two components you'll self-host:
 
-1. User clicks "Connect Slack" → browser opens Slack's authorize page
-2. User clicks "Allow" → Slack redirects to the Cloudflare Worker with an auth code
-3. Worker exchanges the code for a token server-side (using the client secret stored as a Worker secret)
-4. Worker stashes the token in KV (5-min TTL), redirects browser to `vscode://` URI
-5. VS Code catches the URI, extension fetches the token from the Worker's `/exchange` endpoint
-6. Token stored locally in VS Code's encrypted SecretStorage — done
+1. **Slack app** — registered in your workspace, defines scopes and redirect URLs
+2. **Cloudflare Worker** — handles the token exchange server-side so the client secret never touches the extension
 
-## Developer Setup (One-Time)
+Once set up, your team members connect Slack the same way (click "Connect Slack"), but the OAuth flow goes through your app and your Worker.
 
-These steps are for the extension developer (you). End users only click "Connect Slack".
-
-### Step 1: Create a Slack App
+## Step 1: Create a Slack App
 
 1. Go to https://api.slack.com/apps
 2. Click **"Create New App"** → **"From scratch"**
-3. **App Name:** "Tether" (or any name)
-4. **Workspace:** Select your test workspace
+3. **App Name:** "Tether" (or any name your org prefers)
+4. **Workspace:** Select your workspace
 5. Click **"Create App"**
 
-### Step 2: Configure OAuth & Permissions
+## Step 2: Configure OAuth & Permissions
 
 1. In the left sidebar, click **"OAuth & Permissions"**
 2. Under **"Redirect URLs"**, add your Worker URL:
-   - Development (ngrok): `https://<ngrok-url>/slack-callback`
-   - Production: `https://tether-oauth.<account>.workers.dev/slack-callback`
-3. Under **"User Token Scopes"**, add:
-   - `search:read` — Search messages (requires user token)
+   ```
+   https://tether-oauth.<your-account>.workers.dev/slack-callback
+   ```
+3. Under **"User Token Scopes"**, add all of these:
+   - `search:read` — search messages (core feature)
+   - `channels:read` — list channels for resolution
+   - `channels:history` — fetch thread replies
+   - `groups:read` — private channel listing
+   - `groups:history` — private channel threads
+   - `im:read` — DM listing
+   - `im:history` — DM threads
+   - `mpim:read` — group DM listing
+   - `mpim:history` — group DM threads
+   - `users:read` — user name resolution
 4. Under **"Bot Token Scopes"**, add:
-   - `channels:history`, `channels:read`
-   - `groups:history`, `groups:read`
-   - `im:history`, `im:read`
-   - `mpim:history`, `mpim:read`
-   - `users:read`
+   - `channels:read` — Slack requires at least one bot scope for app installation. Tether doesn't use the bot token.
 
-### Step 3: Deploy the Cloudflare Worker
+> **Why user scopes?** Slack's `search.messages` API only works with user tokens (`xoxp-`). Tether searches on behalf of the authenticated user, so all meaningful scopes are user-level.
 
-1. Install wrangler: `npm install -g wrangler`
-2. Login: `wrangler login`
+## Step 3: Deploy the Cloudflare Worker
+
+The Worker handles the OAuth token exchange so the client secret stays server-side. The source is in `oauth-proxy/cloudflare-worker.js`.
+
+1. Install wrangler:
+   ```bash
+   npm install -g wrangler
+   ```
+2. Login:
+   ```bash
+   wrangler login
+   ```
 3. Create a KV namespace:
    ```bash
    wrangler kv namespace create OAUTH_KV
@@ -63,109 +72,64 @@ These steps are for the extension developer (you). End users only click "Connect
    ```bash
    cd oauth-proxy && wrangler deploy
    ```
-7. Your URL will be: `https://tether-oauth.<account>.workers.dev`
+7. Your URL will be: `https://tether-oauth.<your-account>.workers.dev`
 
-### Step 4: Configure VS Code Settings
+## Step 4: Configure Tether
 
-Add your Slack app's client ID and Worker URL to `.vscode/settings.json`:
+Set these two VS Code settings (workspace or user level):
 
 ```json
 {
-  "businessContext.slack.clientId": "YOUR_CLIENT_ID",
-  "businessContext.slack.oauthProxyUrl": "https://tether-oauth.<account>.workers.dev"
+  "businessContext.slack.clientId": "YOUR_SLACK_APP_CLIENT_ID",
+  "businessContext.slack.oauthProxyUrl": "https://tether-oauth.<your-account>.workers.dev"
 }
 ```
 
+Both must be set together. If either is empty, Tether falls back to the built-in default app.
+
 No client secret needed in VS Code — it stays on the Worker.
 
-## Development: ngrok (Alternative)
+## Step 5: Distribute to Your Team
 
-For local development you can use ngrok + the local proxy server instead of the Worker:
+**Single workspace (simplest):** Install the Slack app to your workspace and share the VS Code settings above with your team.
 
-1. Start the local proxy server:
-   ```bash
-   node oauth-proxy/local-server.js
-   ```
+**Multiple workspaces:** Enable distribution in your Slack app settings:
 
-2. In another terminal, start ngrok:
-   ```bash
-   ngrok http 3456
-   ```
-
-3. Copy the HTTPS URL from ngrok (e.g. `https://abc123.ngrok-free.app`)
-
-4. Add the redirect URL in your Slack app settings:
-   `https://abc123.ngrok-free.app/slack-callback`
-
-5. Set the proxy URL in VS Code settings:
-   ```json
-   {
-     "businessContext.slack.oauthProxyUrl": "https://abc123.ngrok-free.app"
-   }
-   ```
-
-6. Press F5 to launch Extension Dev Host, click "Connect Slack" — done!
-
-> **Note:** The local server is a redirect-only proxy (code goes to the extension).
-> The Cloudflare Worker handles token exchange server-side. For production/distribution,
-> always use the Worker.
-
-## Distributing the Slack App (Unlisted)
-
-To let users outside your workspace connect via OAuth:
-
-1. In your Slack app settings, go to **"Manage Distribution"**
-2. Complete the checklist items (redirect URL, scopes, etc.)
+1. Go to **"Manage Distribution"**
+2. Complete the checklist items
 3. Click **"Activate Public Distribution"**
-4. Copy the **shareable install URL** — this is what Tether uses as the OAuth authorize URL
-5. Users install by clicking "Connect Slack" in Tether → they see the standard Slack authorize screen
 
-Unlisted distribution (no Slack App Directory listing) requires no review. Users can install
-immediately via the direct URL. The app won't appear in Slack's marketplace search.
+Users outside your workspace can then authorize via the standard Slack consent screen when they click "Connect Slack" in Tether.
 
-## Manual Token Setup (Alternative)
+## Alternative: Manual Token (No Worker Needed)
 
-If you prefer not to use OAuth, you can create a user token manually:
+If you don't want to deploy the Worker, users can create tokens manually:
 
 1. Follow Steps 1-2 above to create a Slack app with scopes
 2. Click **"Install to Workspace"** → **"Allow"**
 3. Copy the **User OAuth Token** (starts with `xoxp-`)
 4. In VS Code settings, set `businessContext.slack.userToken` to the token
 
-> **Important:** You need a **User** token (`xoxp-`), not a Bot token (`xoxb-`).
-> The `search.messages` API only works with user tokens.
-
-## End User Experience (OAuth)
-
-1. User installs Tether extension
-2. User opens Tether chat panel
-3. User clicks **"Connect"** next to Slack
-4. Browser opens Slack authorization page
-5. User clicks **"Allow"**
-6. Browser redirects → Worker exchanges code → VS Code opens → Slack connected!
+> **Important:** You need a **User** token (`xoxp-`), not a Bot token (`xoxb-`). The `search.messages` API only works with user tokens.
 
 ## Troubleshooting
 
 ### OAuth redirect fails
-
-- Make sure the Worker is deployed (or ngrok is running for dev)
-- Verify the redirect URL in Slack app matches your Worker URL exactly
-- Check that `businessContext.slack.oauthProxyUrl` is set correctly
+- Make sure the Worker is deployed
+- Verify the redirect URL in your Slack app matches your Worker URL exactly (including `/slack-callback`)
+- Check that `businessContext.slack.oauthProxyUrl` is set correctly in VS Code
 
 ### "token_not_found_or_expired" error
-
 - The token exchange must happen within 5 minutes of authorization
 - Try the OAuth flow again — click "Connect Slack"
 
-### "Not authenticated" Error
-
+### "Not authenticated" error
 - Make sure you have a **User OAuth Token** (starts with `xoxp-`)
 - Not the Bot token or other tokens
 
 ### "No results found"
-
-- Check that your bot has been added to channels you want to search
-- In Slack, type `/invite @YourBotName` in any channel
+- The `search:read` scope only searches channels the authenticated user has access to
+- Private channels require the user to be a member
 
 ## Security
 
