@@ -49,6 +49,17 @@ async function checkRateLimit(kv, prefix, identifier, limit) {
   return true;
 }
 
+/** Escapes HTML special characters to prevent XSS when injecting
+ *  user-controlled values into HTML responses. */
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -102,7 +113,7 @@ async function handleSlackCallback(url, env) {
 
   if (error) {
     return new Response(
-      `<h2>Slack authorization failed</h2><p>Error: ${error}</p>`,
+      `<h2>Slack authorization failed</h2><p>Error: ${escapeHtml(error)}</p>`,
       { headers: { "Content-Type": "text/html" } }
     );
   }
@@ -132,7 +143,7 @@ async function handleSlackCallback(url, env) {
 
   if (!tokenData.ok) {
     return new Response(
-      `<h2>Token exchange failed</h2><p>${tokenData.error || "Unknown error"}</p>`,
+      `<h2>Token exchange failed</h2><p>${escapeHtml(tokenData.error || "Unknown error")}</p>`,
       { status: 502, headers: { "Content-Type": "text/html" } }
     );
   }

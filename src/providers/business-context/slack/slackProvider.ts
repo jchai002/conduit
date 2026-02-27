@@ -60,8 +60,8 @@ export class SlackProvider implements BusinessContextProvider {
     });
 
     if (token !== undefined) {
-      const config = vscode.workspace.getConfiguration("businessContext");
-      await config.update("slack.userToken", token, vscode.ConfigurationTarget.Global);
+      // Store in SecretStorage (encrypted) instead of plaintext settings.json
+      await this.context.secrets.store("slack-user-token", token);
       this.client = null;
       vscode.window.showInformationMessage("Slack token saved successfully.");
     }
@@ -236,13 +236,22 @@ export class SlackProvider implements BusinessContextProvider {
   // ── Private ───────────────────────────────────────────
 
   private async getToken(): Promise<string | undefined> {
-    // Try SecretStorage first (OAuth token)
-    const oauthToken = await this.context.secrets.get("slack-user-token");
-    if (oauthToken) return oauthToken;
+    // Try SecretStorage first (OAuth or migrated manual token)
+    const secretToken = await this.context.secrets.get("slack-user-token");
+    if (secretToken) return secretToken;
 
-    // Fallback to manual token in settings (legacy support)
+    // Migrate legacy plaintext token from settings.json → SecretStorage.
+    // Clears the plaintext setting after migration so the token doesn't
+    // linger in settings.json on disk.
     const config = vscode.workspace.getConfiguration("businessContext");
-    return config.get<string>("slack.userToken");
+    const legacyToken = config.get<string>("slack.userToken");
+    if (legacyToken) {
+      await this.context.secrets.store("slack-user-token", legacyToken);
+      await config.update("slack.userToken", undefined, vscode.ConfigurationTarget.Global);
+      return legacyToken;
+    }
+
+    return undefined;
   }
 
   private getMaxSearchResults(): number {
